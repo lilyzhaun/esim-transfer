@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">eSIM transfer</string>
+    <string name="app_description">Transfer a SIM line to a target device using Google Play services.</string>
+    <color name="launcher_background">#1765D1</color>
+    <style name="Theme.EsimTransfer" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowBackground">#F7F7F7</item>
+    </style>
+</resources>
