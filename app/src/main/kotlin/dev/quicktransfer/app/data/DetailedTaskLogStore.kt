@@ -11,7 +11,7 @@ import java.util.UUID
 /** Export-only, append-only evidence. Never passed to the summary log or a Binder String. */
 class DetailedTaskLogStore(private val root: File) {
     private fun directory(id: String): File {
-        require(id.matches(Regex("[A-Za-z0-9-]{1,80}"))) { "Invalid task ID" }
+        require(id.matches(Regex("[A-Za-z0-9-]{1,80}"))) { "任务编号无效" }
         return File(root, id)
     }
     @Synchronized fun append(id: String, kind: String, value: JSONObject) {
@@ -56,7 +56,7 @@ class DetailedTaskLogStore(private val root: File) {
                 var remaining = part.length
                 while (remaining > 0) {
                     val count = input.read(buffer, 0, minOf(buffer.size.toLong(), remaining).toInt())
-                    if (count < 0) throw java.io.EOFException("The log file changed during export")
+                    if (count < 0) throw java.io.EOFException("日志文件在导出期间发生变化")
                     output.write(buffer, 0, count); remaining -= count
                 }
             }

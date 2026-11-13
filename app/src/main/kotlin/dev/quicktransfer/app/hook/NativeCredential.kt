@@ -17,7 +17,7 @@ internal data class NativeCredential(val code: String, val addresses: List<Strin
             val message = gms.field(result, "f")
             val needsInput = web != null && gms.text(web, "a").isNotBlank() || message != null && gms.text(message, "a").isNotBlank()
             return NativeCredential(if (addressOnly) "" else finalCode, addresses, finalCode.isNotBlank(), needsInput,
-                gms.field(result, "d") == true, gms.text(result, "c").ifBlank { "Google Play services returned no download information(${gms.number(result, "g")})" })
+                gms.field(result, "d") == true, gms.text(result, "c").ifBlank { "Google Play 服务未返回下载信息（${gms.number(result, "g")}）" })
         }
     }
 }

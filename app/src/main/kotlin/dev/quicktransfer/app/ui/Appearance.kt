@@ -9,12 +9,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import top.yukonga.miuix.kmp.theme.*
 
-enum class ThemeMode(val title: String) { SYSTEM("System default"), LIGHT("Light"), DARK("Dark") }
+enum class ThemeMode(val title: String) { SYSTEM("跟随系统"), LIGHT("浅色"), DARK("深色") }
 enum class Accent(val title: String, val light: Color, val dark: Color) {
-    BLUE("Blue", Color(0xFF1765D1), Color(0xFF82B0FF)),
-    TEAL("Teal", Color(0xFF006C67), Color(0xFF79D7CC)),
-    VIOLET("Violet", Color(0xFF6941B3), Color(0xFFC5ABF8)),
-    ROSE("Rose", Color(0xFFAC3F56), Color(0xFFF3AABD))
+    BLUE("经典蓝", Color(0xFF1765D1), Color(0xFF82B0FF)),
+    TEAL("青绿", Color(0xFF006C67), Color(0xFF79D7CC)),
+    VIOLET("鸢尾紫", Color(0xFF6941B3), Color(0xFFC5ABF8)),
+    ROSE("玫瑰红", Color(0xFFAC3F56), Color(0xFFF3AABD))
 }
 data class Appearance(val theme: ThemeMode = ThemeMode.SYSTEM, val accent: Accent = Accent.BLUE,
     val floating: Boolean = true, val blur: Boolean = true, val liquid: Boolean = true,
@@ -37,7 +37,7 @@ class AppearanceStore(context: Context) {
             "liquid_glass_enabled" -> mutable.value.copy(liquid = enabled)
             "predictive_back_enabled" -> mutable.value.copy(predictiveBack = enabled)
             "haptics_enabled" -> mutable.value.copy(haptics = enabled)
-            else -> error("Unknown appearance setting")
+            else -> error("未知外观设置")
         }
         prefs.edit().putBoolean(key, enabled).apply()
     }

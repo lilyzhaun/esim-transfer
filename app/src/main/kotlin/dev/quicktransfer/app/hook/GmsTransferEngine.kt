@@ -67,7 +67,7 @@ internal class GmsTransferEngine(private val context: Context, private val gms: 
                 gms.text(request, "e") == target.imei && gms.text(operation, "o") == target.eid
             correctEid && target.imei in ids && ids.all { it in target.imeis }
         } else gms.text(operation, "o") == target.eid && gms.text(request, "e") == target.imei
-        check(matches) { "The target identity does not match the request" }
+        check(matches) { "目标身份与请求不一致" }
     }
 
     private fun failureReason(metadata: Any): String {
@@ -75,18 +75,18 @@ internal class GmsTransferEngine(private val context: Context, private val gms: 
         if (failure == 0) return ""
         return gms.text(metadata, "m").ifBlank {
             when (failure) {
-                1 -> "Enable this SIM line first"
-                2 -> "Set a screen lock first"
-                3 -> "Transfer credentials expired. Check again"
-                4 -> "No transfer configuration is available for this line"
-                5 -> "Google Play services could not authenticate this line"
-                6 -> "Google Play services does not offer a transfer method for this line"
-                7 -> "Connect to Wi-Fi and refresh"
-                8 -> "Use the device owner profile"
-                11 -> "Google Play services reported incompatible source and target device types"
-                12, 13 -> "The device does not meet the transfer requirements"
-                14 -> "Device management policy prevents transferring this line"
-                else -> "Google Play services eligibility check failed($failure)"
+                1 -> "请先启用这条 SIM 线路"
+                2 -> "请先设置设备锁屏密码"
+                3 -> "转移凭据已到期，请重新检查"
+                4 -> "Google Play 服务未提供这条线路的转移配置"
+                5 -> "Google Play 服务未能完成线路鉴权"
+                6 -> "Google Play 服务未开放这条线路的转移方式"
+                7 -> "请连接 Wi-Fi 后刷新"
+                8 -> "请在手机主用户中操作"
+                11 -> "Google Play 服务判定源设备与目标设备类型不匹配"
+                12, 13 -> "Google Play 服务判定设备能力不满足转移要求"
+                14 -> "设备管理策略禁止转移这条线路"
+                else -> "Google Play 服务资格检查未通过（$failure）"
             }
         }
     }

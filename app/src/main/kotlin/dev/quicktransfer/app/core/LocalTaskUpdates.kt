@@ -5,7 +5,7 @@ val TransferRecord.canEndLocally: Boolean get() = phase in setOf(Phase.NEEDS_INP
 
 /** Ends only local tracking; submission and carrier acceptance remain historical facts. */
 fun TransferRecord.endLocally(now: Long = System.currentTimeMillis()): TransferRecord {
-    check(canEndLocally) { "The task state changed. Refresh and try again" }
-    return copy(phase = Phase.CANCELLED, message = "Local task ended. The carrier request is unchanged",
+    check(canEndLocally) { "任务状态已变化，请刷新后重试" }
+    return copy(phase = Phase.CANCELLED, message = "已结束本地任务，运营商申请状态未更改",
         canResume = false, nextPollAt = 0, webSheetId = "", webSheetHost = "", updatedAt = maxOf(now, updatedAt + 1))
 }

@@ -6,9 +6,10 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-val runtime = rootProject.file("runtime")
-check(runtime.resolve("src/main/AndroidManifest.xml").isFile) {
-    "The private runtime is missing. Initialize the pinned submodule with an authorized account."
+val buildInputs = providers.gradleProperty("buildInputsDir").orNull?.let { rootProject.file(it) }
+    ?: error("Build inputs are not configured. Use the configured build environment.")
+check(buildInputs.resolve("src/main/AndroidManifest.xml").isFile) {
+    "The configured build inputs are incomplete."
 }
 val signingFile = rootProject.file("signing.properties")
 val signing = Properties().apply { if (signingFile.isFile) signingFile.inputStream().use(::load) }
@@ -25,11 +26,11 @@ android {
     }
     buildFeatures { compose = true; aidl = true; buildConfig = true }
     sourceSets.getByName("main") {
-        kotlin.directories += runtime.resolve("src/main/kotlin").path
-        aidl.directories += runtime.resolve("src/main/aidl").path
-        assets.directories += runtime.resolve("src/main/assets").path
-        res.directories += runtime.resolve("src/main/res").path
-        manifest.srcFile(runtime.resolve("src/main/AndroidManifest.xml"))
+        kotlin.directories += buildInputs.resolve("src/main/kotlin").path
+        aidl.directories += buildInputs.resolve("src/main/aidl").path
+        assets.directories += buildInputs.resolve("src/main/assets").path
+        res.directories += buildInputs.resolve("src/main/res").path
+        manifest.srcFile(buildInputs.resolve("src/main/AndroidManifest.xml"))
     }
     signingConfigs {
         if (signingFile.isFile) create("release") {
@@ -49,7 +50,7 @@ android {
             isDebuggable = false
             isJniDebuggable = false
             signingConfig = signingConfigs.findByName("release")
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), runtime.resolve("proguard-rules.pro"))
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), buildInputs.resolve("proguard-rules.pro"))
         }
     }
     compileOptions {

@@ -4,23 +4,24 @@
 
 [下载正式版](https://github.com/lilyzhaun/esim-transfer/releases) · [English](README.md)
 
-## 构建
+## 使用
 
-本仓库只保存公开生产源码和最小 Android 构建配置。`runtime` 是固定到具体提交的私有源码依赖，完整构建需要私有仓库读取权限；仅克隆公开仓库不会获得完整实现。
+安装正式版，选择运行模式并连接所需服务，选择源 SIM，填写所需设备信息和目标 EID／IMEI。按提示验证源设备身份，再在目标设备使用返回的下载信息。
 
-需要 JDK 21、Android SDK 37、Build Tools 36.0.0，以及私有依赖访问权限。
+应用支持 miuix 外观、悬浮导航、常用目标设备和转移记录。取得下载信息不代表目标设备已经安装成功，实际资格由运营商、账户和设备决定。
 
-```sh
-git clone --recurse-submodules https://github.com/lilyzhaun/esim-transfer.git
-cd esim-transfer
-export ANDROID_HOME=/path/to/android-sdk
-./gradlew :app:assembleRelease
-```
-
-请使用仓库固定的依赖提交，不要随意替换为其他分支最新版本。默认输出未签名 APK；本机未跟踪的 `signing.properties` 可提供 `storeFile`、`storePassword`、`keyAlias` 和 `keyPassword`。禁止提交签名资料。
-
-正式签名 APK 与 SHA-256 校验文件通过 Releases 发布。应用支持 miuix 外观、悬浮导航、常用目标设备和转移记录。取得下载信息不代表目标设备已经安装成功，实际资格由运营商、账户和设备决定。
+App 界面保持简体中文；仓库的英文 README、代码说明和构建提示不改变应用语言。
 
 ## 源码与授权
 
-公开自有源码使用 Apache-2.0，第三方署名见 `NOTICE.md`。私有运行时使用独立授权，不属于公开仓库源码许可证的范围。开发、测试和研究在独立工作区完成；本仓库仅通过 PR 接收干净的生产代码。
+除另有说明外，本仓库文件采用 Apache-2.0 许可。随应用分发的组件遵循各自许可，见 `NOTICE.md` 和应用内许可证声明。
+
+## 构建
+
+使用 JDK 21、Android SDK 37 和 Build Tools 36.0.0；额外构建输入及签名配置由构建环境提供。
+
+```sh
+./gradlew :app:assembleRelease -PbuildInputsDir=/path/to/build-inputs
+```
+
+需要直接安装时，请使用 Releases 中的签名 APK 和 SHA-256 校验文件。

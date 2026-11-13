@@ -48,10 +48,10 @@ internal fun TaskLogPage(record: TransferRecord?, state: TransferUiState, back: 
             exporting = true
             try {
                 exportLog(id, uri)
-                feedback = "Complete log exported"
+                feedback = "详细日志已导出"
             } catch (error: Exception) {
                 if (error is CancellationException) throw error
-                feedback = "Export failed. Check the connection and destination, then try again"
+                feedback = "导出未完成，请检查服务连接与保存位置后重试"
             } finally { exporting = false }
         }
     }
@@ -63,34 +63,33 @@ internal fun TaskLogPage(record: TransferRecord?, state: TransferUiState, back: 
             if (connected || refresh > 0) log = load(id, true) ?: log
         } catch (error: Exception) {
             if (error is CancellationException) throw error
-            readError = "New log data could not be synced. The local copy is retained; sync and retry"
+            readError = "暂时无法更新日志，当前显示已保存的内容"
         } finally { loading = false }
     }
     val format = remember { SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault()) }
-    PageFrame("Task log", onBack = back, message = state.message.ifEmpty { feedback }.ifEmpty { readError },
+    PageFrame("任务日志", onBack = back, message = state.message.ifEmpty { feedback }.ifEmpty { readError },
         dismissMessage = { feedback = ""; readError = ""; dismissOperation() },
-        actions = { RefreshAction("Refresh task log", !loading && !state.busy, { refresh++ }, loading) }) {
-        item { Text("This page shows a summary. Exported files include complete identities, credentials, and captured requests and responses.",
+        actions = { RefreshAction("刷新任务日志", !loading && !state.busy, { refresh++ }, loading) }) {
+        item { Text("这里显示和复制简略记录。导出文件包含完整身份、凭据及已采集的请求与响应。",
             color = uiColors().secondary, fontSize = 14.sp, lineHeight = 21.sp, modifier = Modifier.padding(12.dp)) }
         if (!connected) item {
-            Text(if (archived) "The complete log is stored locally and can be exported." else if (log == null)
-                "This older log is not synced. Connect the original service or authorized Shizuku to retrieve it." else "Showing the local copy. Switching execution mode does not remove it.", color = uiColors().secondary)
-            InlineAction(if (state.busy) "Syncing…" else "Sync existing logs", !loading && !state.busy, connect, Modifier.fillMaxWidth())
+            Text(if (archived) "完整日志已保存在本应用中，可直接导出。" else if (log == null)
+                "尚未取得完整日志，请连接服务后重试。" else "可刷新日志查看最新进度。", color = uiColors().secondary)
+            InlineAction(if (state.busy) "正在刷新…" else "刷新日志", !loading && !state.busy, connect, Modifier.fillMaxWidth())
         }
-        if (state.dataNotice.isNotEmpty()) item { Text(state.dataNotice, color = uiColors().secondary, modifier = Modifier.statusLiveRegion()) }
         if (log != null || canExport) item { PrimaryAction(record != null && canExport && !exporting && exportId == null, {
             feedback = ""; dismissOperation()
             exportId = record?.id; export.launch("eSIM-log-${record?.createdAt ?: System.currentTimeMillis()}.txt")
-        }, Modifier.fillMaxWidth()) { Text(if (exporting) "Exporting…" else "Export complete log") } }
+        }, Modifier.fillMaxWidth()) { Text(if (exporting) "正在导出…" else "导出详细日志") } }
         val current = log
         if (current != null) {
-            if (!current.complete) item { Text("Only part of this older task was retained. Earlier events cannot be recovered.", color = uiColors().secondary, fontSize = 14.sp) }
-            if (current.dropped > 0) item { Text("${current.dropped} earlier entries are omitted", color = uiColors().secondary, fontSize = 14.sp) }
-            if (connected && !canExport) item { Text("Update the module and reconnect the original service to sync complete logs.", color = uiColors().secondary) }
-            item { InlineAction("Copy log", current.entries.isNotEmpty(), {
+            if (!current.complete) item { Text("这项旧任务仅保留部分记录，早期过程无法补回。", color = uiColors().secondary, fontSize = 14.sp) }
+            if (current.dropped > 0) item { Text("已省略较早的 ${current.dropped} 条日志", color = uiColors().secondary, fontSize = 14.sp) }
+            if (connected && !canExport) item { Text("更新模块并重新连接原服务后，可同步详细日志。", color = uiColors().secondary) }
+            item { InlineAction("复制日志", current.entries.isNotEmpty(), {
                 dismissOperation()
-                context.getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("Task log", current.text()))
-                feedback = "Log copied"
+                context.getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("任务日志", current.text()))
+                feedback = "日志已复制"
             }, Modifier.fillMaxWidth()) }
             items(current.entries) { entry ->
                 Card(Modifier.fillMaxWidth(), insideMargin = PaddingValues(16.dp)) {
@@ -100,7 +99,7 @@ internal fun TaskLogPage(record: TransferRecord?, state: TransferUiState, back: 
                     }
                 }
             }
-        } else if (loading) item { Text("Loading log…", modifier = Modifier.padding(12.dp).statusLiveRegion()) }
-        else if (readError.isEmpty() && connected) item { EmptyState("No log available", "New transfers automatically record their progress.") }
+        } else if (loading) item { Text("正在读取日志…", modifier = Modifier.padding(12.dp).statusLiveRegion()) }
+        else if (readError.isEmpty() && connected) item { EmptyState("暂无日志", "新的转移任务会自动记录过程。") }
     }
 }

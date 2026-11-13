@@ -49,10 +49,10 @@ internal fun rememberCarrierWebChrome(origin: () -> String?, error: (String) -> 
     client.requestPermissions = { permissions.launch(it) }
     client.chooseFile = { files.launch(it) }
     DisposableEffect(client) { onDispose { client.close() } }
-    OverlayDialog(show = client.prompt.isNotEmpty(), title = "Website permissions", onDismissRequest = client::deny) {
+    OverlayDialog(show = client.prompt.isNotEmpty(), title = "网页验证权限", onDismissRequest = client::deny) {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text(client.prompt)
-            ConfirmationActions("Continue", client::deny, client::allow)
+            ConfirmationActions("继续", client::deny, client::allow)
         }
     }
     return client
@@ -97,10 +97,10 @@ internal class CarrierWebChrome(private val context: Context, private val activi
     }
     private fun ask(value: Pending) {
         pending = value
-        val names = value.permissions.joinToString(" and ") { if (it == Manifest.permission.CAMERA) "camera" else "microphone" }
+        val names = value.permissions.joinToString("和") { if (it == Manifest.permission.CAMERA) "相机" else "麦克风" }
         val rationale = activity != null && value.permissions.any { ActivityCompat.shouldShowRequestPermissionRationale(activity, it) }
-        prompt = "${Uri.parse(value.origin).host} needs $names to complete carrier verification." +
-            if (rationale) "Permission was not granted. You can try again or return to the page." else "Continue to grant access, or return to the page."
+        prompt = "${Uri.parse(value.origin).host} 需要使用$names 完成运营商身份验证。" +
+            if (rationale) "上次未获得权限，你可以继续授权，也可以返回网页。" else "你可以选择继续授权或返回网页。"
     }
     fun allow() {
         prompt = ""
@@ -120,7 +120,7 @@ internal class CarrierWebChrome(private val context: Context, private val activi
         val denied = value.permissions.filterNot(::granted)
         if (denied.isEmpty()) value.accept() else {
             value.reject()
-            error("Required permissions were not granted. Enable them in app settings and retry; the page is retained.")
+            error("网页验证所需权限未获得。可在应用权限设置中开启后重试，原页面已保留。")
             if (activity != null && denied.any { !ActivityCompat.shouldShowRequestPermissionRationale(activity, it) }) settings()
         }
     }
@@ -143,14 +143,14 @@ internal class CarrierWebChrome(private val context: Context, private val activi
         capture = file to uri; temporaryFiles += file
         launchFile(Intent(if (video) MediaStore.ACTION_VIDEO_CAPTURE else MediaStore.ACTION_IMAGE_CAPTURE)
             .putExtra(MediaStore.EXTRA_OUTPUT, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-            .apply { clipData = ClipData.newRawUri("Verification file", uri) })
+            .apply { clipData = ClipData.newRawUri("验证材料", uri) })
     }
     private fun launchFile(intent: Intent) {
         val callback = fileCallback ?: return
         fileFlight = FileFlight(callback, requireNotNull(fileOrigin), capture)
         try { chooseFile(intent) }
-        catch (_: ActivityNotFoundException) { fileFlight = null; completeFile(null); error("No camera or file picker is available. Install a suitable app and try again") }
-        catch (_: SecurityException) { fileFlight = null; completeFile(null); error("Camera or file access changed. Grant permission and try again"); settings() }
+        catch (_: ActivityNotFoundException) { fileFlight = null; completeFile(null); error("没有可用的相机或文件选择器，请安装相应应用后重试") }
+        catch (_: SecurityException) { fileFlight = null; completeFile(null); error("相机或文件访问权限已变化，请重新授权后重试"); settings() }
     }
     fun fileReturned(code: Int, data: Intent?) {
         val flight = fileFlight ?: return

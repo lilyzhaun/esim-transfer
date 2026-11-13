@@ -20,7 +20,7 @@ import androidx.compose.ui.semantics.*
 
 @Composable
 internal fun HistoryPage(records: List<TransferRecord>, delete: (String) -> String = { "" },
-    sync: (() -> Unit)? = null, syncing: Boolean = false, notice: String = "", select: (String) -> Unit) {
+    sync: (() -> Unit)? = null, syncing: Boolean = false, select: (String) -> Unit) {
     val active = LocalRouteActive.current
     var query by rememberSaveable { mutableStateOf("") }
     var successfulOnly by rememberSaveable { mutableStateOf(false) }
@@ -41,36 +41,35 @@ internal fun HistoryPage(records: List<TransferRecord>, delete: (String) -> Stri
     }
     val operationMessage = LocalOperationMessage.current
     val dismissOperation = LocalDismissOperationMessage.current
-    PageFrame("History", message = operationMessage.ifEmpty { feedback },
+    PageFrame("记录", message = operationMessage.ifEmpty { feedback },
         dismissMessage = { feedback = ""; dismissOperation() }, actions = {
-        if (sync != null) RefreshAction("Sync history and logs", active && !syncing, sync, syncing)
+        if (sync != null) RefreshAction("同步记录和日志", active && !syncing, sync, syncing)
     }) {
-        if (notice.isNotEmpty()) item { Text(notice, color = uiColors().secondary, fontSize = 13.sp, modifier = Modifier.statusLiveRegion()) }
-        if (records.isEmpty()) item { EmptyState("No transfers yet", "Transfer progress and download results will appear here.") }
+        if (records.isEmpty()) item { EmptyState("还没有转移记录", "开始转移后，进度和激活码会保存在这里。") }
         else {
-            item { TextField(query, { query = it }, label = "Search carrier, device, or identity suffix", singleLine = true,
+            item { TextField(query, { query = it }, label = "搜索运营商、设备或身份尾号", singleLine = true,
                 enabled = active, modifier = Modifier.fillMaxWidth()) }
             item { Card(Modifier.fillMaxWidth(), insideMargin = PaddingValues(0.dp)) {
-                SwitchPreference(title = "Successful results only", summary = "Activation code or download configuration received", checked = successfulOnly,
+                SwitchPreference(title = "仅显示成功记录", summary = "已取得激活码或下载配置", checked = successfulOnly,
                     onCheckedChange = { successfulOnly = it }, enabled = active)
             } }
             item { Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("${visible.size} records", color = uiColors().secondary, fontSize = 14.sp)
-                if (query.isNotEmpty() || successfulOnly) TextButton(text = "Clear filters", enabled = active,
+                Text("${visible.size} 条记录", color = uiColors().secondary, fontSize = 14.sp)
+                if (query.isNotEmpty() || successfulOnly) TextButton(text = "清除筛选", enabled = active,
                     onClick = { query = ""; successfulOnly = false })
             } }
-            if (visible.isEmpty()) item { EmptyState("No matching records", "Try another keyword or clear the filters.") }
+            if (visible.isEmpty()) item { EmptyState("没有匹配的记录", "试试其他关键词，或清除筛选。") }
             items(visible, key = { it.id }) { record -> Card(Modifier.fillMaxWidth(), insideMargin = PaddingValues(0.dp)) {
                 Row(Modifier.fillMaxWidth().padding(end = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.weight(1f)) {
                         BasicComponent(title = "${record.source.displayTitle} → ${record.target.name}",
                             summary = "${record.statusTitle}\n${dateText(record.createdAt)}" +
-                                if (record.canDeleteFromHistory) "" else "\nAvailable for deletion after the task ends",
+                                if (record.canDeleteFromHistory) "" else "\n任务结束后可删除",
                             onClick = ({ select(record.id) }).takeIf { active })
                     }
                     IconButton(enabled = active && record.canDeleteFromHistory, modifier = Modifier.size(48.dp)
                         .semantics(mergeDescendants = true) {
-                            contentDescription = "Delete record"; role = Role.Button
+                            contentDescription = "删除记录"; role = Role.Button
                             if (!active || !record.canDeleteFromHistory) disabled()
                         },
                         onClick = { deletionId = record.id; showDelete = true }) {
@@ -80,18 +79,18 @@ internal fun HistoryPage(records: List<TransferRecord>, delete: (String) -> Stri
             } }
         }
     }
-    OverlayDialog(show = showDelete, title = "Delete this record?", onDismissRequest = { showDelete = false; deletePending = false },
+    OverlayDialog(show = showDelete, title = "删除这条记录？", onDismissRequest = { showDelete = false; deletePending = false },
         onDismissFinished = {
             if (deletePending) {
                 deletePending = false
-                deletionId?.let { dismissOperation(); feedback = delete(it).ifEmpty { "Record deleted" } }
+                deletionId?.let { dismissOperation(); feedback = delete(it).ifEmpty { "记录已删除" } }
             }
             deletionId = null
         }) {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             deleting?.let { Text("${it.source.displayTitle} → ${it.target.name}\n${dateText(it.createdAt)}") }
-            Text("This removes the local record. It does not cancel a request already sent to the carrier.")
-            ConfirmationActions("Delete", { showDelete = false; deletePending = false },
+            Text("删除后将从本机记录列表移除，无法在列表中再次查看。不会撤销运营商申请。")
+            ConfirmationActions("确认删除", { showDelete = false; deletePending = false },
                 { deletePending = true; showDelete = false }, enabled = active && deleting?.canDeleteFromHistory == true)
         }
     }

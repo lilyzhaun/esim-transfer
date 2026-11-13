@@ -25,32 +25,32 @@ internal fun CarriersPage(state: TransferUiState, back: () -> Unit, refresh: () 
     val focus = LocalFocusManager.current
     val listing = remember(catalog.entries, locale) { carrierListings(catalog.entries, locale) }
     val entries = remember(listing, query, locale) { listing.filter { it.matches(query, locale) } }
-    PageFrame("Supported carriers", onBack = back, message = state.message,
-        actions = { RefreshAction("Refresh carriers", !busy, refresh, busy) }) {
+    PageFrame("支持的运营商", onBack = back, message = state.message,
+        actions = { RefreshAction("刷新运营商列表", !busy, refresh, busy) }) {
         if (catalog.entries.isNotEmpty()) {
             item {
-                TextField(query, { query = it }, label = "Search carrier or country", singleLine = true,
+                TextField(query, { query = it }, label = "搜索运营商或国家地区", singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     keyboardActions = KeyboardActions(onSearch = { focus.clearFocus() }), modifier = Modifier.fillMaxWidth())
             }
-            item { Text(if (query.isBlank()) "${entries.size} carriers" else "${entries.size} carriers found",
+            item { Text(if (query.isBlank()) "${entries.size} 个运营商" else "找到 ${entries.size} 个运营商",
                 color = uiColors().secondary, fontSize = 14.sp, modifier = Modifier.statusLiveRegion()) }
         }
         if (catalog.message.isNotBlank()) item { Text(catalog.message, color = uiColors().secondary,
             fontSize = 14.sp, lineHeight = 21.sp, modifier = Modifier.statusLiveRegion()) }
         if (!state.host.connected && catalog.entries.isNotEmpty()) item {
-            Text("Disconnected. Showing the previously loaded list.", color = uiColors().secondary, fontSize = 14.sp)
+            Text("服务已断开，当前显示上次读取的列表。", color = uiColors().secondary, fontSize = 14.sp)
         }
         when {
-            busy && catalog.entries.isEmpty() -> item { EmptyState("Loading carriers", "Updating the list. Please wait") }
+            busy && catalog.entries.isEmpty() -> item { EmptyState("正在读取运营商", "正在更新列表，请稍候") }
             !state.host.connected && catalog.entries.isEmpty() -> item {
-                EmptyState("Connect to view carriers", "Connect the service to load the carrier list.", "Connect service", refresh)
+                EmptyState("连接后查看运营商", "连接服务以获取运营商列表。", "连接服务", refresh)
             }
             catalog.updatedAt == 0L && catalog.entries.isEmpty() -> item {
-                EmptyState("Could not load the list", "Check the service connection and try again.", "Reload", refresh)
+                EmptyState("暂时无法读取列表", "请检查服务连接后重试。", "重新读取", refresh)
             }
-            catalog.entries.isEmpty() -> item { EmptyState("No carriers available", "Refresh the list later.") }
-            entries.isEmpty() -> item { EmptyState("No matching carriers", "Try a carrier or country name.", "Clear search") { query = "" } }
+            catalog.entries.isEmpty() -> item { EmptyState("暂无可用运营商", "请稍后刷新列表。") }
+            entries.isEmpty() -> item { EmptyState("没有匹配的运营商", "试试运营商名称或国家地区名称。", "清除搜索") { query = "" } }
             else -> items(entries, key = { it.key }) { entry ->
                 Card(Modifier.fillMaxWidth(), insideMargin = PaddingValues(0.dp)) {
                     BasicComponent(title = entry.carrier.title, summary = entry.summary(locale))

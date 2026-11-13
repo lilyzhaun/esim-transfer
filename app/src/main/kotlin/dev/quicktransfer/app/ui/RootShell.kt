@@ -3,29 +3,32 @@
 package dev.quicktransfer.app.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.MotionDurationScale
 import androidx.compose.ui.focus.focusProperties
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 import top.yukonga.miuix.kmp.basic.*
 import top.yukonga.miuix.kmp.blur.*
-import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.extended.*
+import kotlin.math.abs
 
-internal enum class RootPage(val title: String) { HOME("Transfer"), DEVICES("Devices"), HISTORY("History"), SETTINGS("Settings") }
+internal enum class RootPage(val title: String) { HOME("转移"), DEVICES("设备"), HISTORY("记录"), SETTINGS("设置") }
 
 @Composable
 internal fun RootShell(covered: Boolean, rootRequest: RootPage? = null, consumeRootRequest: () -> Unit = {},
@@ -35,16 +38,35 @@ internal fun RootShell(covered: Boolean, rootRequest: RootPage? = null, consumeR
     val appearance = LocalAppearance.current
     val colors = uiColors()
     val density = LocalDensity.current
+    val haptic = LocalHapticFeedback.current
+    val inputMode = LocalInputModeManager.current
+    val motionScale = scope.coroutineContext[MotionDurationScale]?.scaleFactor ?: 1f
+    var navigationJob by remember { mutableStateOf<Job?>(null) }
+    val interactive by rememberUpdatedState(!covered)
     var barPixels by remember { mutableIntStateOf(0) }
     var refreshEpoch by remember { mutableStateOf(List(RootPage.entries.size) { 0 }) }
     val bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    val material = appearance.blur && LocalShaderSupported.current
-    val surface = rememberLayerBackdrop()
-    val icons = listOf(MiuixIcons.Home, MiuixIcons.Phone, MiuixIcons.Timer, MiuixIcons.Settings)
-    LaunchedEffect(rootRequest) {
-        rootRequest?.let { pager.scrollToPage(it.ordinal); consumeRootRequest() }
+    val surface = rememberLayerBackdrop { drawRect(colors.canvas); drawContent() }
+    fun select(index: Int, settling: Boolean = false) {
+        val target = index.coerceIn(0, 3)
+        navigationJob?.cancel()
+        if (!settling && pager.currentPage == target && !pager.isScrollInProgress && abs(pager.currentPageOffsetFraction) < 0.001f) {
+            refreshEpoch = refreshEpoch.mapIndexed { i, n -> if (i == target) n + 1 else n }
+            return
+        }
+        if (appearance.haptics && inputMode.inputMode == InputMode.Touch) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        navigationJob = scope.launch {
+            if (motionScale <= 0f || inputMode.inputMode == InputMode.Keyboard) pager.scrollToPage(target)
+            else pager.animateScrollToPage(target, animationSpec = spring(dampingRatio = 1f, stiffness = 650f))
+        }
     }
-    BackHandler(!covered && pager.currentPage != 0) { scope.launch { pager.animateScrollToPage(0) } }
+    LaunchedEffect(rootRequest) {
+        rootRequest?.let { navigationJob?.cancel(); pager.scrollToPage(it.ordinal); consumeRootRequest() }
+    }
+    LaunchedEffect(covered) {
+        if (covered) { navigationJob?.cancel(); pager.scrollToPage(pager.currentPage) }
+    }
+    BackHandler(!covered && pager.currentPage != 0) { select(0) }
     Box(Modifier.fillMaxSize().background(colors.canvas)) {
         HorizontalPager(pager, userScrollEnabled = !covered, beyondViewportPageCount = 1,
             modifier = Modifier.fillMaxSize().layerBackdrop(surface)) { index ->
@@ -57,42 +79,21 @@ internal fun RootShell(covered: Boolean, rootRequest: RootPage? = null, consumeR
             }
         }
         if (!covered) {
-            val outline = RoundedCornerShape(if (appearance.floating) 28.dp else 0.dp)
-            val effects = if (material) Modifier.drawBackdrop(surface, shape = { outline }, effects = {
-                blur(20.dp.toPx())
-                if (appearance.liquid && appearance.floating) runtimeShaderEffect("TransferGlass", GLASS, "content") {
-                    setFloatUniform("extent", size.width, size.height)
-                }
-            }) else Modifier.background(colors.surface, outline)
             Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().onSizeChanged { barPixels = it.height }
-                .padding(horizontal = if (appearance.floating) 16.dp else 0.dp)
-                .padding(bottom = bottom + if (appearance.floating) 12.dp else 0.dp)) {
-                NavigationBar(modifier = Modifier.clip(outline).then(effects),
-                    color = if (material) colors.surface.copy(alpha = 0.72f) else colors.surface,
-                    mode = NavigationBarDisplayMode.IconAndText) {
+                .padding(horizontal = if (appearance.floating) 12.dp else 0.dp)
+                .padding(bottom = bottom + if (appearance.floating) 12.dp else 0.dp), contentAlignment = Alignment.Center) {
+                if (appearance.floating) FloatingNavBar(
+                    position = { pager.currentPage + pager.currentPageOffsetFraction },
+                    selected = pager.targetPage, onSelect = { select(it) }, backdrop = surface,
+                    pageInteractions = pager.interactionSource, onGestureStart = { navigationJob?.cancel() },
+                    onDragCommit = { if (interactive) select(it, settling = true) })
+                else NavigationBar(color = colors.surface, mode = NavigationBarDisplayMode.IconAndText) {
                     RootPage.entries.forEachIndexed { index, page ->
-                        NavigationBarItem(selected = pager.currentPage == index, enabled = !pager.isScrollInProgress,
-                            icon = icons[index], label = page.title, onClick = {
-                                if (pager.currentPage == index) refreshEpoch = refreshEpoch.mapIndexed { i, n -> if (i == index) n + 1 else n }
-                                else scope.launch { pager.animateScrollToPage(index) }
-                            })
+                        NavigationBarItem(selected = pager.currentPage == index, enabled = true,
+                            icon = rootNavigationIcons[index], label = page.title, onClick = { select(index) })
                     }
                 }
             }
         }
     }
 }
-
-// A small, original edge displacement. No third-party lens or gesture implementation is used.
-private const val GLASS = """
-uniform shader content;
-uniform float2 extent;
-half4 main(float2 point) {
-    float2 uv = point / max(extent, float2(1.0));
-    float edge = abs(uv.y - 0.5) * 2.0;
-    float bend = edge * edge * edge * 1.5;
-    float2 samplePoint = point + float2(0.0, (0.5 - uv.y) * bend);
-    half4 base = content.eval(samplePoint);
-    return half4(min(base.rgb + half3(edge * 0.018), half3(1.0)), base.a);
-}
-"""

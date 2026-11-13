@@ -2,14 +2,14 @@
 package dev.quicktransfer.app.core
 
 object IdentityRules {
-    fun eidError(eid: String): String? = if (eid.matches(Regex("[0-9]{32}"))) null else "EID must contain 32 digits"
+    fun eidError(eid: String): String? = if (eid.matches(Regex("[0-9]{32}"))) null else "EID 需要 32 位数字"
     fun imeiError(imei: String): String? {
-        if (!imei.matches(Regex("[0-9]{15}"))) return "IMEI must contain 15 digits"
+        if (!imei.matches(Regex("[0-9]{15}"))) return "IMEI 需要 15 位数字"
         val sum = imei.reversed().mapIndexed { index, c ->
             val n = c.digitToInt() * if (index % 2 == 1) 2 else 1
             n / 10 + n % 10
         }.sum()
-        return if (sum % 10 == 0) null else "Invalid IMEI check digit. Verify the number and try again"
+        return if (sum % 10 == 0) null else "IMEI 校验位不正确，请核对后重试"
     }
     fun valid(eid: String, imei: String) = eidError(eid) == null && imeiError(imei) == null
 }
