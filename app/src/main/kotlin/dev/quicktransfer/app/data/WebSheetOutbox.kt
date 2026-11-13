@@ -19,7 +19,7 @@ internal class WebSheetOutbox(context: Context) {
         WebSheetEvent.parse(event)
         val entries = read()
         if (entries.any { it.task == task && it.sheet == sheet && it.event == event }) return
-        check(entries.size < 32) { "Connect the service to sync pending verification results first" }
+        check(entries.size < 32) { "待保存的验证结果过多，请先连接服务完成同步" }
         write(entries + Entry(UUID.randomUUID().toString(), task, sheet, event))
     }
     @Synchronized fun remove(id: String) = write(read().filterNot { it.id == id })
@@ -30,12 +30,12 @@ internal class WebSheetOutbox(context: Context) {
         val archive = JSONArray(prefs.getString("rejected", "[]")).objects().takeLast(31) +
             rejected.json().put("reason", reply.optString("message"))
         check(prefs.edit().putString("pending", JSONArray(entries.filterNot { it.id == id }.map(Entry::json)).toString())
-            .putString("rejected", JSONArray(archive).toString()).commit()) { "Could not retain the rejected callback. Check available storage" }
+            .putString("rejected", JSONArray(archive).toString()).commit()) { "无法单独保存被拒绝的网页回调，请检查存储空间" }
     }
     private fun read() = JSONArray(prefs.getString("pending", "[]")).objects().map {
         Entry(it.getString("id"), it.getString("task"), it.getString("sheet"), it.getString("event"))
     }
     private fun write(entries: List<Entry>) {
-        check(prefs.edit().putString("pending", JSONArray(entries.map(Entry::json)).toString()).commit()) { "Could not save the verification result. Check available storage" }
+        check(prefs.edit().putString("pending", JSONArray(entries.map(Entry::json)).toString()).commit()) { "无法保存网页验证结果，请检查存储空间" }
     }
 }

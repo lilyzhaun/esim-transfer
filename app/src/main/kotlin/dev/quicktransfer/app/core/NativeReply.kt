@@ -16,7 +16,7 @@ internal fun awaitNativeReply(reply: CompletableFuture<Any>, timeoutMillis: Long
     var received = false
     try {
         val remaining = deadline - System.nanoTime()
-        if (remaining <= 0) throw TimeoutException("Source service response timed out")
+        if (remaining <= 0) throw TimeoutException("GMS 源端响应超时")
         return reply.get(remaining, TimeUnit.NANOSECONDS).also { received = true }
     } catch (error: ExecutionException) {
         throw error.cause ?: error

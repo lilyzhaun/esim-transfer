@@ -19,7 +19,7 @@ class LocalStore(context: Context) {
     fun save(device: TargetDevice) {
         require(IdentityRules.valid(device.eid, device.imei))
         val existing = targetsMutable.value.firstOrNull { it.eid == device.eid }
-        val updated = device.copy(id = existing?.id ?: device.id, name = device.name.trim().take(80).ifBlank { "Target device" })
+        val updated = device.copy(id = existing?.id ?: device.id, name = device.name.trim().take(80).ifBlank { "目标设备" })
         targetsMutable.value = (targetsMutable.value.filterNot { it.id == updated.id || it.id == device.id } + updated).takeLast(100)
         prefs.edit().putString("targets", JSONArray(targetsMutable.value.map { it.json() }).toString()).apply()
     }
@@ -29,7 +29,7 @@ class LocalStore(context: Context) {
     }
     @Synchronized fun deleteRecord(id: String) {
         val record = recordsMutable.value.firstOrNull { it.id == id } ?: return
-        check(record.canDeleteFromHistory) { "Complete or end the task before deleting its record" }
+        check(record.canDeleteFromHistory) { "请先完成或结束任务，再删除记录" }
         deletedRecords += id
         recordsMutable.value = recordsMutable.value.filterNot { it.id == id }
         prefs.edit().putStringSet("deleted_records", deletedRecords.toSet())

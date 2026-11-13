@@ -18,8 +18,8 @@ internal class GmsLocalTransport(private val context: Context, private val gms: 
     private val current = ThreadLocal<Session>()
     private val sourceRole = ThreadLocal<Boolean>()
     private val endpoints = Collections.synchronizedMap(WeakHashMap<Any, (Any) -> Any>())
-    private val closedEndpoint: (Any) -> Any = { error("The original transfer session has ended") }
-    fun ensureActive() { check(current.get()?.closed != true) { "The original transfer session has ended" } }
+    private val closedEndpoint: (Any) -> Any = { error("原转移会话已结束") }
+    fun ensureActive() { check(current.get()?.closed != true) { "原转移会话已结束" } }
     fun isActive() = current.get()?.closed != true
 
     fun installHooks(module: XposedModule) {
@@ -37,7 +37,7 @@ internal class GmsLocalTransport(private val context: Context, private val gms: 
     }
 
     fun fetch(profile: Any, confirmed: Boolean): Any {
-        check(confirmed) { "Complete source device verification first" }
+        check(confirmed) { "请先完成源设备身份验证" }
         val session = Session()
         current.set(session)
         var returned = false

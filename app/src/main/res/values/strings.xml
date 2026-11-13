@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">eSIM transfer</string>
-    <string name="app_description">Transfer a SIM line to a target device using Google Play services.</string>
+    <string name="app_description">通过 Google Play 服务，将本机线路转到指定目标 eUICC。</string>
     <color name="launcher_background">#1765D1</color>
     <style name="Theme.EsimTransfer" parent="android:style/Theme.Material.Light.NoActionBar">
         <item name="android:windowLightStatusBar">true</item>

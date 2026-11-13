@@ -20,7 +20,7 @@ class TaskArchiveStore(context: Context) {
     private val mutable = MutableStateFlow(revisions.all.keys.filter { file(it).baseFile.exists() }.toSet())
     val ids = mutable.asStateFlow()
     private fun file(id: String): AtomicFile {
-        require(id.matches(Regex("[A-Za-z0-9-]{1,80}"))) { "Invalid task ID" }
+        require(id.matches(Regex("[A-Za-z0-9-]{1,80}"))) { "任务编号无效" }
         return AtomicFile(File(root, "$id.txt.gz"))
     }
     fun contains(id: String) = id in mutable.value
@@ -39,7 +39,7 @@ class TaskArchiveStore(context: Context) {
         mutable.value = mutable.value + record.id
     }
     @Synchronized fun copyTo(id: String, output: OutputStream) {
-        check(contains(id)) { "The complete log has not been synced. Connect the original service or Shizuku and retry" }
+        check(contains(id)) { "详细日志尚未同步，请连接原服务或 Shizuku 后重试" }
         GZIPInputStream(file(id).openRead()).use { it.copyTo(output) }
     }
     @Synchronized fun delete(id: String) {

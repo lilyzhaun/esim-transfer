@@ -33,7 +33,7 @@ internal fun InlineAction(label: String, enabled: Boolean, onClick: () -> Unit, 
 internal fun RefreshAction(label: String, enabled: Boolean, onClick: () -> Unit, busy: Boolean = false) {
     IconButton(onClick, enabled = enabled && !busy, modifier = Modifier.size(48.dp).semantics(mergeDescendants = true) {
         contentDescription = label; role = Role.Button
-        stateDescription = if (busy) "Refreshing" else "Ready"
+        stateDescription = if (busy) "正在刷新" else "刷新"
         if (!enabled || busy) disabled()
     }) {
         if (busy) CircularProgressIndicator(Modifier.size(22.dp)) else Icon(MiuixIcons.Refresh, null)
@@ -45,9 +45,9 @@ internal fun ConfirmationActions(confirmLabel: String, onCancel: () -> Unit, onC
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         if (maxWidth < 320.dp || LocalDensity.current.fontScale >= 1.5f) Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             PrimaryAction(enabled, onConfirm, Modifier.fillMaxWidth()) { Text(confirmLabel) }
-            InlineAction("Cancel", true, onCancel, Modifier.fillMaxWidth())
+            InlineAction("取消", true, onCancel, Modifier.fillMaxWidth())
         } else Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            InlineAction("Cancel", true, onCancel, Modifier.weight(1f))
+            InlineAction("取消", true, onCancel, Modifier.weight(1f))
             PrimaryAction(enabled, onConfirm, Modifier.weight(1f)) { Text(confirmLabel) }
         }
     }

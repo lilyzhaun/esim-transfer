@@ -13,15 +13,15 @@ internal class GmsCarrierCatalog(private val context: Context, private val gms: 
         val ids = table.keys.map { (it as Number).toInt() }.toSet() + overrides.map { gms.number(requireNotNull(it), "a").toInt() }
         var warning = ""
         val countries = try { countries(ids) } catch (_: SecurityException) {
-            warning = "Country information is restricted. Unknown locations use a globe icon"; emptyMap()
+            warning = "系统未允许读取地区信息，未知地区以地球符号显示"; emptyMap()
         } catch (_: IllegalArgumentException) {
-            warning = "Country information is unavailable. Unknown locations use a globe icon"; emptyMap()
+            warning = "系统暂未提供地区信息，未知地区以地球符号显示"; emptyMap()
         }
         val entries = ids.mapNotNull { id ->
             val info = gms.call(lookup, "b", id, false) ?: return@mapNotNull null
             val psim = gms.static("cejs", "B", gms.number(info, "d").toInt()) == true
             val esim = gms.static("cejs", "B", gms.number(info, "e").toInt()) == true
-            if (!psim && !esim) null else SupportedCarrier(id, gms.text(info, "b").ifBlank { "Carrier $id" },
+            if (!psim && !esim) null else SupportedCarrier(id, gms.text(info, "b").ifBlank { "运营商 $id" },
                 countries[id].orEmpty().sorted(), psim, esim)
         }.toMutableList()
         val nativeIds = ids + SupplementalCarriers.entries.filter { gms.call(lookup, "b", it.id, false) != null }.map { it.id }
@@ -34,7 +34,7 @@ internal class GmsCarrierCatalog(private val context: Context, private val gms: 
         val result = mutableMapOf<Int, MutableSet<String>>()
         val cursor = context.contentResolver.query(Uri.parse("content://carrier_id/all"),
             arrayOf("carrier_id", "mccmnc"), null, null, null)
-            ?: throw IllegalArgumentException("Carrier identification is unavailable")
+            ?: throw IllegalArgumentException("运营商识别表不可用")
         cursor.use {
             val idColumn = it.getColumnIndexOrThrow("carrier_id")
             val mccColumn = it.getColumnIndexOrThrow("mccmnc")

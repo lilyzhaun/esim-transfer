@@ -10,7 +10,7 @@ import java.io.File
 class TaskLogStore(private val directory: File) {
     constructor(context: Context) : this(File(context.noBackupFilesDir, "task-logs"))
     private fun file(id: String): AtomicFile {
-        require(id.matches(Regex("[A-Za-z0-9-]{1,80}"))) { "Invalid task ID" }
+        require(id.matches(Regex("[A-Za-z0-9-]{1,80}"))) { "任务编号无效" }
         return AtomicFile(File(directory, "$id.json"))
     }
     @Synchronized fun read(id: String): TaskLog? {
