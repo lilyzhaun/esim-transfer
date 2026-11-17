@@ -33,7 +33,8 @@ android {
         manifest.srcFile(buildInputs.resolve("src/main/AndroidManifest.xml"))
     }
     signingConfigs {
-        if (signingFile.isFile) create("release") {
+        // Certificate rotation is applied by the external signing pipeline.
+        if (signingFile.isFile && signing.getProperty("lineageFile").isNullOrBlank()) create("release") {
             storeFile = rootProject.file(requireNotNull(signing.getProperty("storeFile")))
             storePassword = requireNotNull(signing.getProperty("storePassword"))
             keyAlias = requireNotNull(signing.getProperty("keyAlias"))

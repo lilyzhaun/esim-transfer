@@ -13,9 +13,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.MotionDurationScale
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -40,6 +44,7 @@ internal fun RootShell(covered: Boolean, rootRequest: RootPage? = null, consumeR
     val density = LocalDensity.current
     val haptic = LocalHapticFeedback.current
     val inputMode = LocalInputModeManager.current
+    val pageFocus = remember { List(RootPage.entries.size) { FocusRequester() } }
     val motionScale = scope.coroutineContext[MotionDurationScale]?.scaleFactor ?: 1f
     var navigationJob by remember { mutableStateOf<Job?>(null) }
     val interactive by rememberUpdatedState(!covered)
@@ -71,7 +76,8 @@ internal fun RootShell(covered: Boolean, rootRequest: RootPage? = null, consumeR
         HorizontalPager(pager, userScrollEnabled = !covered, beyondViewportPageCount = 1,
             modifier = Modifier.fillMaxSize().layerBackdrop(surface)) { index ->
             val selected = !covered && pager.currentPage == index
-            Box(Modifier.fillMaxSize().focusProperties { canFocus = selected; onEnter = { if (!selected) cancelFocusChange() } }
+            Box(Modifier.fillMaxSize().focusRequester(pageFocus[index])
+                .focusProperties { canFocus = false; onEnter = { if (!selected) cancelFocusChange() } }
                 .focusGroup().then(if (selected) Modifier else Modifier.clearAndSetSemantics {})) {
                 CompositionLocalProvider(LocalRouteActive provides selected,
                     LocalBottomInset provides maxOf(with(density) { barPixels.toDp() }, bottom + 76.dp),
@@ -80,6 +86,11 @@ internal fun RootShell(covered: Boolean, rootRequest: RootPage? = null, consumeR
         }
         if (!covered) {
             Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().onSizeChanged { barPixels = it.height }
+                .onPreviewKeyEvent {
+                    // The content group overlaps this floating bar; route Up into its children explicitly.
+                    it.type == KeyEventType.KeyDown && it.key == Key.DirectionUp &&
+                        pageFocus[pager.currentPage].requestFocus(FocusDirection.Up)
+                }
                 .padding(horizontal = if (appearance.floating) 12.dp else 0.dp)
                 .padding(bottom = bottom + if (appearance.floating) 12.dp else 0.dp), contentAlignment = Alignment.Center) {
                 if (appearance.floating) FloatingNavBar(

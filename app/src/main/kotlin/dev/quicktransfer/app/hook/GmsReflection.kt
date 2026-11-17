@@ -4,21 +4,26 @@ package dev.quicktransfer.app.hook
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
+import dev.quicktransfer.app.core.Contract
 
-internal class GmsReflection(private val resolve: (String) -> Class<*>) {
-    constructor(loader: ClassLoader) : this({ Class.forName(it, false, loader) })
-    fun type(name: String): Class<*> = resolve(name)
-    fun field(instance: Any, name: String): Any? = instance.javaClass.getDeclaredField(name).apply { isAccessible = true }.get(instance)
+internal class GmsReflection(private val version: Long = Contract.VERSION, private val resolve: (String) -> Class<*>) {
+    constructor(loader: ClassLoader, version: Long = Contract.VERSION) : this(version, { Class.forName(it, false, loader) })
+    fun type(name: String): Class<*> = resolve(GmsSymbols.type(version, name))
+    fun field(instance: Any, name: String): Any? = instance.javaClass
+        .getDeclaredField(GmsSymbols.field(version, instance.javaClass.name, name)).apply { isAccessible = true }.get(instance)
     fun text(instance: Any, name: String) = field(instance, name)?.toString().orEmpty()
     fun number(instance: Any, name: String) = (field(instance, name) as Number).toLong()
-    fun set(instance: Any, name: String, value: Any?) { instance.javaClass.getDeclaredField(name).apply { isAccessible = true }.set(instance, value) }
+    fun set(instance: Any, name: String, value: Any?) { instance.javaClass
+        .getDeclaredField(GmsSymbols.field(version, instance.javaClass.name, name)).apply { isAccessible = true }.set(instance, value) }
     fun call(instance: Any, name: String, vararg args: Any?): Any? = invoke(method(instance.javaClass, name, args, false), instance, args)
-    fun static(name: String, method: String, vararg args: Any?): Any? = invoke(method(type(name), method, args, true), null, args)
+    fun static(name: String, method: String, vararg args: Any?): Any? =
+        invoke(method(type(name), GmsSymbols.method(version, name, method), args, true), null, args)
     fun create(name: String, vararg args: Any?): Any {
         val ctor = type(name).declaredConstructors.single { matches(it.parameterTypes, args) }.apply { isAccessible = true }
         try { return ctor.newInstance(*args) } catch (e: InvocationTargetException) { throw e.targetException }
     }
-    fun declared(name: String, method: String, vararg params: Class<*>): Method = type(name).getDeclaredMethod(method, *params).apply { isAccessible = true }
+    fun declared(name: String, method: String, vararg params: Class<*>): Method =
+        type(name).getDeclaredMethod(GmsSymbols.method(version, name, method), *params).apply { isAccessible = true }
     fun inherited(name: String, method: String, vararg params: Class<*>): Method {
         var current: Class<*>? = type(name)
         while (current != null) {

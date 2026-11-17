@@ -190,7 +190,6 @@ internal fun FloatingNavBar(position: () -> Float, selected: Int, onSelect: (Int
                         }
                         // Compose's synthetic ACTION_CANCEL is an already-consumed release.
                         if (pointer.isConsumed) { cancelled = true; break }
-                        if (!pointer.pressed) { releasedNormally = true; break }
                         val delta = pointer.position.x - pointer.previousPosition.x
                         distance += delta
                         if (grabbed && !dragging && abs(distance) > viewConfiguration.touchSlop) {
@@ -202,6 +201,8 @@ internal fun FloatingNavBar(position: () -> Float, selected: Int, onSelect: (Int
                             dragPosition = (origin + (distance - (panelOffset() - originPanel)) * direction / cellPx).coerceIn(0f, 3f)
                             pointer.consume()
                         }
+                        // ACTION_UP can carry the last displacement without a preceding MOVE.
+                        if (!pointer.pressed) { releasedNormally = true; break }
                     } while (event.changes.any { it.pressed })
                     if (grabbed) {
                         finished = true

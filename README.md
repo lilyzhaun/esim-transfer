@@ -1,6 +1,6 @@
 # eSIM transfer
 
-Android application for selecting a source SIM, verifying a transfer, and saving the download information for a target device.
+Android application for transferring a SIM from the current Android device and saving the download information for a target device.
 
 [Downloads](https://github.com/lilyzhaun/esim-transfer/releases) · [Chinese README](README.zh-CN.md)
 
@@ -9,6 +9,8 @@ Android application for selecting a source SIM, verifying a transfer, and saving
 Install an official release. Select an execution mode, connect the required service, choose the source SIM, complete any required device information, and provide the target EID and IMEI. Follow the source-device verification flow and use the returned download information on the target device.
 
 The interface uses miuix and provides configurable appearance, floating navigation, saved targets, and persistent transfer history. Download information does not by itself confirm installation on the target device. Availability depends on the carrier, account, and devices.
+
+The home screen also offers package discovery for a connected eUICC. Discovery requires a compatible card and an authorized local connection. Transfer and discovery logs can be viewed and explicitly exported from the app.
 
 The application UI remains in Simplified Chinese. English repository documentation and build messages do not change the application's language.
 

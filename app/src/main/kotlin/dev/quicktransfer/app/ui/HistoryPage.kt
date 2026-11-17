@@ -50,7 +50,7 @@ internal fun HistoryPage(records: List<TransferRecord>, delete: (String) -> Stri
             item { TextField(query, { query = it }, label = "搜索运营商、设备或身份尾号", singleLine = true,
                 enabled = active, modifier = Modifier.fillMaxWidth()) }
             item { Card(Modifier.fillMaxWidth(), insideMargin = PaddingValues(0.dp)) {
-                SwitchPreference(title = "仅显示成功记录", summary = "已取得激活码或下载配置", checked = successfulOnly,
+                SwitchPreference(title = "仅显示成功记录", checked = successfulOnly,
                     onCheckedChange = { successfulOnly = it }, enabled = active)
             } }
             item { Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
@@ -62,8 +62,8 @@ internal fun HistoryPage(records: List<TransferRecord>, delete: (String) -> Stri
             items(visible, key = { it.id }) { record -> Card(Modifier.fillMaxWidth(), insideMargin = PaddingValues(0.dp)) {
                 Row(Modifier.fillMaxWidth().padding(end = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.weight(1f)) {
-                        BasicComponent(title = "${record.source.displayTitle} → ${record.target.name}",
-                            summary = "${record.statusTitle}\n${dateText(record.createdAt)}" +
+                        BasicComponent(title = record.source.displayTitle,
+                            summary = "${record.target.name} · ${dateText(record.createdAt)}\n${record.statusTitle}" +
                                 if (record.canDeleteFromHistory) "" else "\n任务结束后可删除",
                             onClick = ({ select(record.id) }).takeIf { active })
                     }

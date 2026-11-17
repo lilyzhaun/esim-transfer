@@ -20,7 +20,8 @@ class DetailedTaskLogStore(private val root: File) {
         File(directory(id).apply { mkdirs() }, "events.jsonl").appendText(entry.toString() + "\n", Charsets.UTF_8)
     }
     /** Consume the entire decoded HTTP body to disk, keeping only the protocol parser's limit in RAM. */
-    fun captureBody(id: String, metadata: JSONObject, input: InputStream): ByteArray {
+    fun captureBody(id: String, metadata: JSONObject, input: InputStream, previewLimit: Int = 262144,
+        captureLimit: Long = Long.MAX_VALUE): ByteArray {
         val file = File(directory(id).apply { mkdirs() }, "http-${UUID.randomUUID()}.body")
         metadata.put("responseBodyFile", file.name).put("responseBodyEncoding", "HTTP entity after content decoding")
         append(id, "http-body-start", JSONObject().put("requestId", metadata.getString("traceId")).put("file", file.name))
@@ -31,14 +32,16 @@ class DetailedTaskLogStore(private val root: File) {
             file.outputStream().buffered().use { output ->
                 val buffer = ByteArray(8192)
                 while (true) {
-                    val count = input.read(buffer)
+                    val remaining = captureLimit - size
+                    if (remaining <= 0) { metadata.put("responseBodyLimitReached", true); break }
+                    val count = input.read(buffer, 0, minOf(buffer.size.toLong(), remaining).toInt())
                     if (count < 0) break
                     output.write(buffer, 0, count)
-                    if (preview.size() < 262145) preview.write(buffer, 0, minOf(count, 262145 - preview.size()))
+                    if (preview.size() < previewLimit + 1) preview.write(buffer, 0, minOf(count, previewLimit + 1 - preview.size()))
                     size += count
                 }
             }
-            complete = true
+            complete = !metadata.optBoolean("responseBodyLimitReached")
             return preview.toByteArray()
         } finally {
             metadata.put("responseBodyBytes", size).put("responseBodyComplete", complete)

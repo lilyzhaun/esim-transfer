@@ -2,8 +2,6 @@
 // Copyright 2026 lilyzhaun
 package dev.quicktransfer.app.ui
 
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -51,7 +49,6 @@ internal fun AboutPage(back: () -> Unit, license: () -> Unit = {}, active: Boole
     val summaries = BasicComponentDefaults.summaryColor(color = secondaryInk)
     val appearance = LocalAppearance.current
     val frost = appearance.blur && LocalShaderSupported.current
-    val context = LocalContext.current
     val cloud = rememberLayerBackdrop()
     val content = rememberLayerBackdrop { drawRect(colors.canvas); drawContent() }
     val list = rememberLazyListState()
@@ -113,11 +110,8 @@ internal fun AboutPage(back: () -> Unit, license: () -> Unit = {}, active: Boole
                             shape = RoundedCornerShape(16.dp), blurRadius = 60f, colors = panelBlend) else Modifier),
                             insideMargin = PaddingValues(0.dp), colors = CardDefaults.defaultColors(
                                 if (frost) Color.Transparent else colors.surface, Color.Transparent)) {
-                            BasicComponent(title = "eSIM 转移", summary = "单机授权，目标设备稍后下载", summaryColor = summaries)
-                            ArrowPreference(title = "GitHub", summary = "lilyzhaun/esim-transfer", summaryColor = summaries, onClick = ({
-                                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/lilyzhaun/esim-transfer")))
-                            }).takeIf { active })
-                            ArrowPreference(title = "许可证与声明", summary = "开源组件与授权说明", summaryColor = summaries, onClick = license.takeIf { active })
+                            BasicComponent(title = "eSIM 转移", summary = "连接源线路，转移到你的目标设备", summaryColor = summaries)
+                            ArrowPreference(title = "第三方组件与许可", summary = "版权、组件来源与许可条款", summaryColor = summaries, onClick = license.takeIf { active })
                         }
                     }
                 }
@@ -130,13 +124,15 @@ internal fun AboutPage(back: () -> Unit, license: () -> Unit = {}, active: Boole
 internal fun LicensePage(back: () -> Unit) {
     val context = LocalContext.current
     val paragraphs by produceState<List<String>?>(null) { value = withContext(Dispatchers.IO) {
-        listOf("LICENSE", "Apache-2.0.txt").flatMap { name ->
+        listOf("LICENSE", "Apache-2.0.txt", "Shizuku-MIT.txt").flatMap { name ->
             context.assets.open(name).bufferedReader().use { it.readText() }.trim().split(Regex("\\n\\s*\\n"))
         }
     } }
-    PageFrame("许可证与声明", onBack = back) {
+    PageFrame("第三方组件与许可", onBack = back) {
         item { Card(Modifier.fillMaxWidth(), insideMargin = PaddingValues(0.dp)) {
+            BasicComponent(title = "授权范围", summary = "这里列示组件的版权与许可信息，不代表整个应用开源。相关权利与义务以各许可证条款为准。")
             BasicComponent(title = "开源组件", summary = "miuix · AndroidX · Kotlin · Shizuku · libxposed · ZXing")
+            BasicComponent(title = "Shizuku API 13.1.5", summary = "RikkaW · MIT License")
             BasicComponent(title = "流体云", summary = "compose-miuix-ui contributors · Apache-2.0")
         } }
         if (paragraphs == null) item { Text("正在读取许可…", color = uiColors().secondary) }
