@@ -51,8 +51,8 @@ internal fun rememberCarrierWebChrome(origin: () -> String?, error: (String) -> 
     DisposableEffect(client) { onDispose { client.close() } }
     OverlayDialog(show = client.prompt.isNotEmpty(), title = "网页验证权限", onDismissRequest = client::deny) {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text(client.prompt)
-            ConfirmationActions("继续", client::deny, client::allow)
+            Text(client.dialogPrompt)
+            ConfirmationActions("继续", client::deny, client::allow, enabled = client.prompt.isNotEmpty())
         }
     }
     return client
@@ -63,6 +63,8 @@ internal class CarrierWebChrome(private val context: Context, private val activi
     private data class Pending(val origin: String, val permissions: List<String>, val accept: () -> Unit,
         val reject: () -> Unit, val web: PermissionRequest? = null)
     var prompt by mutableStateOf("")
+        private set
+    var dialogPrompt by mutableStateOf("")
         private set
     var requestPermissions: (Array<String>) -> Unit = {}
     var chooseFile: (Intent) -> Unit = {}
@@ -99,8 +101,10 @@ internal class CarrierWebChrome(private val context: Context, private val activi
         pending = value
         val names = value.permissions.joinToString("和") { if (it == Manifest.permission.CAMERA) "相机" else "麦克风" }
         val rationale = activity != null && value.permissions.any { ActivityCompat.shouldShowRequestPermissionRationale(activity, it) }
-        prompt = "${Uri.parse(value.origin).host} 需要使用$names 完成运营商身份验证。" +
+        // Visual text survives dismissal; only pending/current-origin state can authorize access.
+        dialogPrompt = "${Uri.parse(value.origin).host} 需要使用$names 完成运营商身份验证。" +
             if (rationale) "上次未获得权限，你可以继续授权，也可以返回网页。" else "你可以选择继续授权或返回网页。"
+        prompt = dialogPrompt
     }
     fun allow() {
         prompt = ""

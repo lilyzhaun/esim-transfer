@@ -5,7 +5,7 @@ import io.github.libxposed.api.XposedModule
 import org.json.JSONObject
 import java.util.UUID
 
-/** Read-only observers of the pinned GMS 26.43.30 HTTP boundary; no request/response replacement. */
+/** Read-only observers of the version-mapped GMS HTTP boundary; no request/response replacement. */
 internal class GmsHttpTrace(private val gms: GmsReflection, private val journal: HostJournal,
     private val task: () -> String?) {
     private val request = ThreadLocal<String>()

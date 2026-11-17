@@ -31,8 +31,9 @@ internal val LocalDismissOperationMessage = staticCompositionLocalOf<() -> Unit>
 
 @Composable
 internal fun PageFrame(title: String, onBack: (() -> Unit)? = null, actions: @Composable RowScope.() -> Unit = {},
-    itemSpacing: Dp = 12.dp, message: String = LocalOperationMessage.current,
-    dismissMessage: () -> Unit = LocalDismissOperationMessage.current, content: LazyListScope.() -> Unit) {
+     itemSpacing: Dp = 12.dp, message: String = LocalOperationMessage.current,
+     dismissMessage: () -> Unit = LocalDismissOperationMessage.current, scrollKey: Any? = null,
+     footer: (@Composable () -> Unit)? = null, content: LazyListScope.() -> Unit) {
     val list = rememberLazyListState()
     val header = MiuixScrollBehavior(rememberTopAppBarState())
     val epoch = LocalReselectEpoch.current
@@ -43,6 +44,7 @@ internal fun PageFrame(title: String, onBack: (() -> Unit)? = null, actions: @Co
     val headerMaterial = if (frosted) Modifier.drawBackdrop(backdrop, shape = { RectangleShape },
         effects = { blur(24.dp.toPx()) }, onDrawSurface = { drawRect(colors.canvas.copy(alpha = 0.88f)) }) else Modifier
     LaunchedEffect(epoch) { if (epoch > 0) { list.scrollToItem(0); header.state.heightOffset = 0f; header.state.contentOffset = 0f } }
+    LaunchedEffect(scrollKey) { if (scrollKey != null) list.scrollToItem(0) }
     val bottom = maxOf(LocalBottomInset.current, WindowInsets.ime.asPaddingValues().calculateBottomPadding())
     Scaffold(containerColor = uiColors().canvas, contentWindowInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout),
         topBar = {
@@ -56,15 +58,17 @@ internal fun PageFrame(title: String, onBack: (() -> Unit)? = null, actions: @Co
         Column(Modifier.fillMaxSize().layerBackdrop(backdrop).padding(start = padding.calculateStartPadding(direction),
             end = padding.calculateEndPadding(direction))
             .consumeWindowInsets(padding)) {
-            LazyColumn(state = list, modifier = Modifier.weight(1f).widthIn(max = 960.dp).fillMaxWidth()
+             LazyColumn(state = list, modifier = Modifier.weight(1f).widthIn(max = 680.dp).fillMaxWidth()
                 .align(Alignment.CenterHorizontally)
                 .then(if (onBack == null) Modifier.nestedScroll(header.nestedScrollConnection) else Modifier),
-                contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = padding.calculateTopPadding() + 12.dp,
-                    bottom = 12.dp + if (active && message.isNotBlank()) 0.dp else bottom),
-                verticalArrangement = Arrangement.spacedBy(itemSpacing), content = content)
-            if (active && message.isNotBlank()) ActionMessage(message, dismissMessage,
-                Modifier.widthIn(max = 960.dp).fillMaxWidth().align(Alignment.CenterHorizontally)
-                    .padding(start = 12.dp, end = 12.dp, bottom = bottom + 12.dp))
+                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = padding.calculateTopPadding() + 16.dp,
+                     bottom = 16.dp + if (footer != null || active && message.isNotBlank()) 0.dp else bottom),
+                 verticalArrangement = Arrangement.spacedBy(itemSpacing), content = content)
+             if (footer != null) Box(Modifier.widthIn(max = 680.dp).fillMaxWidth().align(Alignment.CenterHorizontally)
+                 .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = if (active && message.isNotBlank()) 8.dp else bottom + 12.dp)) { footer() }
+             if (active && message.isNotBlank()) ActionMessage(message, dismissMessage,
+                 Modifier.widthIn(max = 680.dp).fillMaxWidth().align(Alignment.CenterHorizontally)
+                     .padding(start = 16.dp, end = 16.dp, bottom = bottom + 12.dp))
         }
     }
 }
