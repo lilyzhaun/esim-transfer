@@ -43,6 +43,8 @@ class LocalStore(context: Context) {
             if (incoming.id in deletedRecords) return@forEach
             val previous = merged[incoming.id]
             if (previous?.phase == Phase.ISSUED && incoming.phase != Phase.ISSUED) return@forEach
+            if (incoming.phase == Phase.CARRIER_VERIFICATION && previous != null &&
+                (previous.submitted || !previous.phase.running)) return@forEach
             if (previous == null || incoming.updatedAt >= previous.updatedAt) merged[incoming.id] = incoming
         }
         recordsMutable.value = merged.values.sortedByDescending { it.createdAt }.take(50)
