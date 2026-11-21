@@ -22,6 +22,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -87,7 +88,7 @@ internal fun AboutPage(back: () -> Unit, license: () -> Unit = {}, active: Boole
                     Modifier.size(if (compact) 72.dp else 88.dp).graphicsLayer {
                         alpha = aboutIdentityAlpha(progress, 0.35f); scaleX = 0.95f + 0.05f * alpha; scaleY = scaleX
                     }.clip(RoundedCornerShape(22.dp)).background(colorResource(R.color.launcher_background)))
-                Text("eSIM transfer", fontSize = if (density.fontScale > 1.5f) 30.sp else 35.sp,
+                 Text(stringResource(R.string.app_name), fontSize = if (density.fontScale > 1.5f) 30.sp else 35.sp,
                     lineHeight = 44.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, color = colors.text,
                     modifier = Modifier.padding(top = 12.dp, bottom = 5.dp).graphicsLayer {
                         alpha = aboutIdentityAlpha(progress, 0.20f); scaleX = 0.95f + 0.05f * alpha; scaleY = scaleX
@@ -124,15 +125,14 @@ internal fun AboutPage(back: () -> Unit, license: () -> Unit = {}, active: Boole
 internal fun LicensePage(back: () -> Unit) {
     val context = LocalContext.current
     val paragraphs by produceState<List<String>?>(null) { value = withContext(Dispatchers.IO) {
-        listOf("LICENSE", "Apache-2.0.txt", "Shizuku-MIT.txt").flatMap { name ->
+        listOf("LICENSE", "Apache-2.0.txt").flatMap { name ->
             context.assets.open(name).bufferedReader().use { it.readText() }.trim().split(Regex("\\n\\s*\\n"))
         }
     } }
     PageFrame("第三方组件与许可", onBack = back) {
         item { Card(Modifier.fillMaxWidth(), insideMargin = PaddingValues(0.dp)) {
-            BasicComponent(title = "授权范围", summary = "这里列示组件的版权与许可信息，不代表整个应用开源。相关权利与义务以各许可证条款为准。")
-            BasicComponent(title = "开源组件", summary = "miuix · AndroidX · Kotlin · Shizuku · libxposed · ZXing")
-            BasicComponent(title = "Shizuku API 13.1.5", summary = "RikkaW · MIT License")
+            BasicComponent(title = "授权范围", summary = "本应用源码采用 Apache-2.0 许可，第三方组件适用各自的许可证。")
+            BasicComponent(title = "开源组件", summary = "miuix · AndroidX · Kotlin · libxposed · ZXing")
             BasicComponent(title = "流体云", summary = "compose-miuix-ui contributors · Apache-2.0")
         } }
         if (paragraphs == null) item { Text("正在读取许可…", color = uiColors().secondary) }

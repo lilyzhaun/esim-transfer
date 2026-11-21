@@ -17,7 +17,7 @@ class HostRegistrationProvider : ContentProvider() {
         val uid = Binder.getCallingUid()
         val expected = pm.getPackageUid(Contract.GMS, 0)
         if (uid != expected || uid == Process.myUid() || uid / 100_000 != 0 || pm.getPackagesForUid(uid)?.contains(Contract.GMS) != true) throw SecurityException("GMS owner only")
-        require(method == "register" && arg == null && extras?.getInt("protocol") == 1)
+        require(method == "register" && arg == null && extras?.getInt("protocol") == Contract.REGISTRATION_PROTOCOL)
         HostRegistry.register(requireNotNull(extras?.getBinder("host")))
         return Bundle().apply { putBoolean("registered", true) }
     }

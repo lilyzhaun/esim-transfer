@@ -6,6 +6,7 @@ import dev.quicktransfer.app.core.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONArray
+import org.json.JSONObject
 
 class LocalStore(context: Context) {
     private val prefs = context.getSharedPreferences("local_library", Context.MODE_PRIVATE)
@@ -15,7 +16,9 @@ class LocalStore(context: Context) {
     val targets = targetsMutable.asStateFlow()
     val records = recordsMutable.asStateFlow()
     private fun readTargets() = JSONArray(prefs.getString("targets", "[]")).objects().map(TargetDevice::parse)
-    private fun readRecords() = JSONArray(prefs.getString("records", "[]")).objects().map(TransferRecord::parse)
+    private fun readRecords() = rawRecords().filter(JSONObject::isGmsRecord).map(TransferRecord::parse)
+    private fun rawRecords() = JSONArray(prefs.getString("records", "[]")).objects()
+    private fun storedRecords() = JSONArray(rawRecords().filterNot(JSONObject::isGmsRecord) + recordsMutable.value.map(TransferRecord::json))
     fun save(device: TargetDevice) {
         require(IdentityRules.valid(device.eid, device.imei))
         val existing = targetsMutable.value.firstOrNull { it.eid == device.eid }
@@ -33,7 +36,7 @@ class LocalStore(context: Context) {
         deletedRecords += id
         recordsMutable.value = recordsMutable.value.filterNot { it.id == id }
         prefs.edit().putStringSet("deleted_records", deletedRecords.toSet())
-            .putString("records", JSONArray(recordsMutable.value.map { it.json() }).toString()).apply()
+            .putString("records", storedRecords().toString()).apply()
     }
     @Synchronized fun isRecordDeleted(id: String) = id in deletedRecords
     @Synchronized fun merge(records: List<TransferRecord>) {
@@ -43,11 +46,9 @@ class LocalStore(context: Context) {
             if (incoming.id in deletedRecords) return@forEach
             val previous = merged[incoming.id]
             if (previous?.phase == Phase.ISSUED && incoming.phase != Phase.ISSUED) return@forEach
-            if (incoming.phase == Phase.CARRIER_VERIFICATION && previous != null &&
-                (previous.submitted || !previous.phase.running)) return@forEach
             if (previous == null || incoming.updatedAt >= previous.updatedAt) merged[incoming.id] = incoming
         }
         recordsMutable.value = merged.values.sortedByDescending { it.createdAt }.take(50)
-        prefs.edit().putString("records", JSONArray(recordsMutable.value.map { it.json() }).toString()).apply()
+        prefs.edit().putString("records", storedRecords().toString()).apply()
     }
 }
