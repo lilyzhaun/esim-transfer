@@ -100,7 +100,7 @@ internal fun WebSheetPage(record: TransferRecord?, state: TransferUiState, back:
     val dismissOperation = LocalDismissOperationMessage.current
     Scaffold(containerColor = colors.canvas, topBar = {
         SmallTopAppBar(title = "运营商验证", navigationIcon = {
-            IconButton(onClick = back, modifier = Modifier.size(48.dp)) { Icon(MiuixIcons.Back, "返回任务") }
+            IconAction(MiuixIcons.Back, "返回任务", back)
         })
     }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).imePadding()) {
@@ -127,10 +127,9 @@ internal fun WebSheetPage(record: TransferRecord?, state: TransferUiState, back:
             }
             if (feedback.isNotEmpty()) Text(feedback, color = colors.secondary, fontSize = 14.sp, lineHeight = 21.sp,
                 modifier = Modifier.padding(16.dp).statusLiveRegion())
-            if (loading || sending || record?.phase?.running == true) Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                CircularProgressIndicator(Modifier.size(20.dp))
-                Text(if (sending || record?.phase?.running == true) "正在处理验证结果" else "正在加载网页", fontSize = 14.sp, color = colors.secondary)
+            if (loading || sending || record?.phase?.running == true) {
+                LoadingLine(if (sending || record?.phase?.running == true) "正在处理验证结果" else "正在加载网页",
+                    Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
             }
             if (request != null) key(request.id, generation) {
                 CarrierWebView(request, Modifier.weight(1f).fillMaxWidth(),

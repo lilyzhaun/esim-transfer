@@ -69,7 +69,7 @@ internal fun AboutPage(back: () -> Unit, license: () -> Unit = {}, active: Boole
     Scaffold(containerColor = colors.canvas, contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
         topBar = { SmallTopAppBar("关于", modifier = header, color = Color.Transparent,
             titleColor = colors.text.copy(alpha = progress), navigationIcon = {
-                IconButton(back, modifier = Modifier.size(48.dp)) { Icon(MiuixIcons.Back, "返回") }
+                IconAction(MiuixIcons.Back, "返回", back, enabled = active)
             }) }) { padding ->
         val direction = LocalLayoutDirection.current
         val density = LocalDensity.current

@@ -11,8 +11,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.quicktransfer.app.core.*
@@ -70,7 +72,7 @@ internal fun TaskOutcomeHeader(record: TransferRecord, compact: Boolean = false)
         if (!compact) Box(Modifier.size(56.dp).background(ink.copy(alpha = .10f), CircleShape), contentAlignment = Alignment.Center) {
             when {
                 success -> CompletionMark(Modifier.size(30.dp), ink)
-                record.phase.running -> CircularProgressIndicator(Modifier.size(26.dp))
+                record.phase.running -> LoadingRing(26.dp, Modifier, ink)
                 else -> Icon(MiuixIcons.Info, null, Modifier.size(28.dp), tint = ink)
             }
         }
@@ -81,7 +83,7 @@ internal fun TaskOutcomeHeader(record: TransferRecord, compact: Boolean = false)
         }
         Text(if (success && record.activationCode.isNotBlank()) "在目标设备添加 eSIM，即可继续使用这条线路。" else record.message,
             color = uiColors().secondary, fontSize = 14.sp, lineHeight = 22.sp,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            textAlign = TextAlign.Center)
     }
 }
 
@@ -90,8 +92,8 @@ internal fun TaskSummaryCard(record: TransferRecord, click: () -> Unit, enabled:
     Card(Modifier.fillMaxWidth(), insideMargin = PaddingValues(0.dp)) {
         ArrowPreference(title = record.statusTitle, summary = "${record.source.displayTitle} → ${record.target.name}", onClick = click.takeIf { enabled },
             startAction = {
-                if (record.phase == Phase.ISSUED) CompletionMark(Modifier.padding(end = 12.dp).size(24.dp))
-                else Icon(MiuixIcons.Info, null, Modifier.padding(end = 12.dp).size(24.dp), tint = MiuixTheme.colorScheme.primary)
+                if (record.phase == Phase.ISSUED) CompletionMark(Modifier.size(24.dp))
+                else Icon(MiuixIcons.Info, null, Modifier.size(24.dp), tint = MiuixTheme.colorScheme.primary)
             })
     }
 }

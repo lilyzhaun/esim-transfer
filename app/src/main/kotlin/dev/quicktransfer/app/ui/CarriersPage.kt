@@ -34,7 +34,7 @@ internal fun CarriersPage(state: TransferUiState, back: () -> Unit, refresh: () 
                     keyboardActions = KeyboardActions(onSearch = { focus.clearFocus() }), modifier = Modifier.fillMaxWidth())
             }
             item { Text(if (query.isBlank()) "${entries.size} 个运营商" else "找到 ${entries.size} 个运营商",
-                color = uiColors().secondary, fontSize = 14.sp, modifier = Modifier.statusLiveRegion()) }
+                color = uiColors().secondary, fontSize = 14.sp, modifier = Modifier.padding(horizontal = 16.dp).statusLiveRegion()) }
         }
         if (catalog.message.isNotBlank()) item { Text(catalog.message, color = uiColors().secondary,
             fontSize = 14.sp, lineHeight = 21.sp, modifier = Modifier.statusLiveRegion()) }
@@ -42,7 +42,7 @@ internal fun CarriersPage(state: TransferUiState, back: () -> Unit, refresh: () 
             Text("服务已断开，当前显示上次读取的列表。", color = uiColors().secondary, fontSize = 14.sp)
         }
         when {
-            busy && catalog.entries.isEmpty() -> item { EmptyState("正在读取运营商", "正在更新列表，请稍候") }
+            busy && catalog.entries.isEmpty() -> item { LoadingLine("正在读取运营商", Modifier.padding(16.dp)) }
             !state.host.connected && catalog.entries.isEmpty() -> item {
                 EmptyState("连接后查看运营商", "连接服务以获取运营商列表。", "连接服务", refresh)
             }

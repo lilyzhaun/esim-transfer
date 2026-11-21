@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardActions
@@ -29,7 +30,6 @@ import dev.quicktransfer.app.R
 import top.yukonga.miuix.kmp.basic.*
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.*
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import java.time.Instant
@@ -73,19 +73,19 @@ internal fun TransferPage(state: TransferUiState, source: SourceLine?, records: 
         if (running != null) item {
             Card(Modifier.fillMaxWidth(), insideMargin = PaddingValues(0.dp)) {
                 ArrowPreference(title = running.phase.label, summary = running.message, onClick = ({ viewRecord(running.id) }).takeIf { active },
-                    startAction = { Icon(MiuixIcons.Timer, null, Modifier.padding(end = 12.dp).size(24.dp)) })
+                    startAction = { Icon(MiuixIcons.Timer, null, Modifier.size(24.dp)) })
             }
         }
-        item { SmallTitle("源线路", textColor = uiColors().secondary) }
+        item { SectionLabel("源线路") }
         item { Card(Modifier.fillMaxWidth(), insideMargin = PaddingValues(0.dp)) {
             ArrowPreference(title = source?.displayTitle ?: "选择本机 SIM",
                 summary = source?.displaySummary
                     ?: if (state.host.connected) "请选择要转移的线路" else "连接服务后读取可用线路",
                 onClick = chooseSource.takeIf { editable && state.host.connected }, startAction = {
-                    Icon(MiuixIcons.Phone, null, Modifier.padding(end = 12.dp).size(24.dp))
+                    Icon(MiuixIcons.Phone, null, Modifier.size(24.dp))
                 })
         } }
-        item { SmallTitle("目标设备", textColor = uiColors().secondary) }
+        item { SectionLabel("目标设备") }
         item { Card(Modifier.fillMaxWidth(), insideMargin = PaddingValues(0.dp)) {
             ArrowPreference(title = targetName.ifBlank { "选择已保存的设备" }, summary = "也可直接填写目标设备的 EID 和 IMEI", onClick = chooseTarget.takeIf { editable })
         } }
@@ -128,21 +128,31 @@ internal fun TransferPage(state: TransferUiState, source: SourceLine?, records: 
 internal fun IdentityFields(eid: String, imei: String, onEid: (String) -> Unit, onImei: (String) -> Unit, enabled: Boolean = true) {
     val focus = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        TextField(value = eid, onValueChange = { onEid(it.filterNot(Char::isWhitespace)) }, label = "目标 EID", enabled = enabled,
-            singleLine = true, modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
-            keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Next) }))
-        Text(if (eid.length >= 32 && IdentityRules.eidError(eid) != null) IdentityRules.eidError(eid)!! else "32 位数字 · ${eid.length}/32",
-            fontSize = 13.sp, color = if (eid.length >= 32 && IdentityRules.eidError(eid) != null) MiuixTheme.colorScheme.error else uiColors().secondary,
-            modifier = Modifier.padding(horizontal = 12.dp))
-        TextField(value = imei, onValueChange = { onImei(it.filterNot(Char::isWhitespace)) }, label = "目标 IMEI", enabled = enabled,
-            singleLine = true, modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { keyboard?.hide(); focus.clearFocus() }))
-        Text(if (imei.length >= 15 && IdentityRules.imeiError(imei) != null) IdentityRules.imeiError(imei)!! else "目标设备的 15 位 IMEI",
-            fontSize = 13.sp, color = if (imei.length >= 15 && IdentityRules.imeiError(imei) != null) MiuixTheme.colorScheme.error else uiColors().secondary,
-            modifier = Modifier.padding(horizontal = 12.dp))
+    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            TextField(value = eid, onValueChange = { onEid(it.filterNot(Char::isWhitespace)) }, label = "目标 EID", enabled = enabled,
+                singleLine = true, modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Next) }))
+            IdentityHint("32 位数字 · ${eid.length}/32", if (eid.length >= 32) IdentityRules.eidError(eid) else null)
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            TextField(value = imei, onValueChange = { onImei(it.filterNot(Char::isWhitespace)) }, label = "目标 IMEI", enabled = enabled,
+                singleLine = true, modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { keyboard?.hide(); focus.clearFocus() }))
+            IdentityHint("目标设备的 15 位 IMEI", if (imei.length >= 15) IdentityRules.imeiError(imei) else null)
+        }
     }
 }
+
+@Composable
+private fun IdentityHint(hint: String, error: String?) {
+    Text(error ?: hint, modifier = Modifier.padding(horizontal = 16.dp), fontSize = 13.sp, lineHeight = 19.sp,
+        color = if (error == null) uiColors().secondary else MiuixTheme.colorScheme.error)
+}
+
+@Composable
+private fun warningColors(): Pair<Color, Color> = if (LocalDarkTheme.current) Color(0xFF3D310F) to Color(0xFFF9E5AD)
+    else Color(0xFFFAF0D9) to Color(0xFF644B19)
 
 @Composable
 internal fun StatusPanel(tone: Int, title: String, summary: String, action: String? = null, click: () -> Unit = {}, enabled: Boolean = true) {
@@ -150,7 +160,7 @@ internal fun StatusPanel(tone: Int, title: String, summary: String, action: Stri
     val (background, ink) = when (tone) {
         0 -> if (dark) Color(0xFF133B2A) to Color(0xFFC0EDD2) else Color(0xFFE0F4E7) to Color(0xFF16472E)
         2 -> if (dark) Color(0xFF4C2025) to Color(0xFFFFD9DE) else Color(0xFFFBE6E6) to Color(0xFF742B34)
-        else -> if (dark) Color(0xFF3D310F) to Color(0xFFF9E5AD) else Color(0xFFFAF0D9) to Color(0xFF644B19)
+        else -> warningColors()
     }
     Card(Modifier.fillMaxWidth().statusLiveRegion(), insideMargin = PaddingValues(20.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -159,11 +169,10 @@ internal fun StatusPanel(tone: Int, title: String, summary: String, action: Stri
                     if (tone == 0) CompletionMark(Modifier.size(22.dp), ink)
                     else Icon(MiuixIcons.Info, null, tint = ink, modifier = Modifier.size(22.dp))
                 }
-                Text(title, fontSize = 18.sp, lineHeight = 25.sp, fontWeight = FontWeight.SemiBold)
+                Text(title, Modifier.weight(1f), fontSize = 18.sp, lineHeight = 25.sp, fontWeight = FontWeight.SemiBold)
             }
             Text(summary, color = uiColors().secondary, fontSize = 14.sp, lineHeight = 22.sp)
-            if (action != null) TextButton(action, onClick = click, enabled = enabled, modifier = Modifier.heightIn(min = 48.dp),
-                colors = ButtonDefaults.textButtonColors(color = Color.Transparent, disabledColor = Color.Transparent, textColor = MiuixTheme.colorScheme.primary))
+            if (action != null) InlineAction(action, enabled, click)
         }
     }
 }
@@ -173,7 +182,8 @@ internal fun EmptyState(title: String, summary: String, action: String? = null, 
     Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 40.dp), horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Icon(MiuixIcons.File, null, tint = uiColors().secondary, modifier = Modifier.size(40.dp))
-        Text(title, fontSize = 21.sp, fontWeight = FontWeight.SemiBold)
+        Text(title, fontSize = 21.sp, lineHeight = 28.sp, fontWeight = FontWeight.SemiBold,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         Text(summary, color = uiColors().secondary, fontSize = 15.sp, lineHeight = 23.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         if (action != null) PrimaryAction(LocalRouteActive.current, click) { Text(action) }
     }
@@ -185,15 +195,15 @@ internal fun SourcePicker(sources: List<SourceLine>, selected: Int?, back: () ->
     PageFrame("选择源线路", onBack = back, actions = {
         if (refresh != null) RefreshAction("刷新 SIM 列表", !busy, refresh, busy)
     }) {
-        if (sources.isEmpty()) item { EmptyState(if (busy) "正在读取线路" else "没有可用线路",
-            "确认 SIM 已启用，并连接 Google Play 服务后刷新。", if (refresh != null && !busy) "刷新线路" else null, { refresh?.invoke() }) }
+        if (sources.isEmpty()) item {
+            if (busy) LoadingLine("正在读取线路", Modifier.padding(16.dp))
+            else EmptyState("没有可用线路", "确认 SIM 已启用，并连接 Google Play 服务后刷新。",
+                if (refresh != null) "刷新线路" else null, { refresh?.invoke() })
+        }
         if (sources.isNotEmpty()) item { Card(Modifier.fillMaxWidth().selectableGroup(), insideMargin = PaddingValues(0.dp)) {
             sources.forEach { source ->
-                BasicComponent(title = source.displayTitle, summary = source.displaySummary,
-                    enabled = source.supported, role = Role.RadioButton,
-                    modifier = Modifier.semantics { this.selected = selected == source.subId },
-                    onClick = ({ select(source.subId) }).takeIf { source.supported },
-                    endActions = { RadioButton(selected == source.subId, onClick = null, modifier = Modifier.clearAndSetSemantics {}) })
+                ChoiceRow(source.displayTitle, selected == source.subId, { select(source.subId) },
+                    summary = source.displaySummary, enabled = source.supported)
             }
         } }
         item { Card(Modifier.fillMaxWidth(), insideMargin = PaddingValues(0.dp)) {
@@ -205,12 +215,12 @@ internal fun SourcePicker(sources: List<SourceLine>, selected: Int?, back: () ->
 @Composable
 internal fun DevicesPage(devices: List<TargetDevice>, add: () -> Unit, edit: (String) -> Unit) {
     val active = LocalRouteActive.current
-    PageFrame("设备", actions = { if (devices.isNotEmpty()) IconButton(add, enabled = active, modifier = Modifier.size(48.dp)) { Icon(MiuixIcons.Add, "添加目标设备") } }) {
+    PageFrame("设备", actions = { if (devices.isNotEmpty()) IconAction(MiuixIcons.Add, "添加目标设备", add, enabled = active) }) {
         if (devices.isEmpty()) item { EmptyState("保存你的目标设备", "填写一次 EID 和 IMEI，下一次转移时直接选择。", "添加设备", add) }
         else items(devices, key = { it.id }) { device ->
             Card(Modifier.fillMaxWidth(), insideMargin = PaddingValues(0.dp)) {
                 ArrowPreference(title = device.name, summary = "EID 尾号 ${device.eid.takeLast(6)}\nIMEI 尾号 ${device.imei.takeLast(4)}",
-                    onClick = ({ edit(device.id) }).takeIf { active }, startAction = { Icon(MiuixIcons.Phone, null, Modifier.padding(end = 12.dp).size(24.dp)) })
+                    onClick = ({ edit(device.id) }).takeIf { active }, startAction = { Icon(MiuixIcons.Phone, null, Modifier.size(24.dp)) })
             }
         }
     }
@@ -264,17 +274,14 @@ internal fun DeviceEditor(device: TargetDevice?, back: () -> Unit, save: (Target
         }
         if (device != null) item { InlineAction("删除此设备", active && !saving, { showDelete = true }, Modifier.fillMaxWidth()) }
     }
-    OverlayDialog(show = showDelete, title = "删除目标设备？", onDismissRequest = { showDelete = false; deletePending = false },
-        onDismissFinished = { if (deletePending) {
+    ConfirmationDialog(showDelete, "删除目标设备？", "删除设备", dismiss = { showDelete = false; deletePending = false },
+        confirm = { deletePending = true; showDelete = false }, afterDismiss = { if (deletePending) {
             deletePending = false
             try { delete() } catch (error: Exception) {
                 Log.e("QuickTransferUi", "目标设备删除失败", error); feedback = "设备未能删除，请重试"
             }
         } }) {
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text("仅移除本机保存的设备信息，已有转移记录仍然保留。")
-            ConfirmationActions("删除设备", { showDelete = false }, { deletePending = true; showDelete = false })
-        }
+        DialogText("仅移除本机保存的设备信息，已有转移记录仍然保留。")
     }
 }
 

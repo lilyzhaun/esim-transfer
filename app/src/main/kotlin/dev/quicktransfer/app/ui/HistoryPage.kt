@@ -13,10 +13,8 @@ import dev.quicktransfer.app.core.*
 import top.yukonga.miuix.kmp.basic.*
 import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Delete
-import androidx.compose.ui.semantics.*
 
 @Composable
 internal fun HistoryPage(records: List<TransferRecord>, delete: (String) -> String = { "" },
@@ -54,9 +52,8 @@ internal fun HistoryPage(records: List<TransferRecord>, delete: (String) -> Stri
                     onCheckedChange = { successfulOnly = it }, enabled = active)
             } }
             item { Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("${visible.size} 条记录", color = uiColors().secondary, fontSize = 14.sp)
-                if (query.isNotEmpty() || successfulOnly) TextButton(text = "清除筛选", enabled = active,
-                    onClick = { query = ""; successfulOnly = false })
+                Text("${visible.size} 条记录", Modifier.weight(1f).padding(start = 16.dp), color = uiColors().secondary, fontSize = 14.sp)
+                if (query.isNotEmpty() || successfulOnly) InlineAction("清除筛选", active, { query = ""; successfulOnly = false })
             } }
             if (visible.isEmpty()) item { EmptyState("没有匹配的记录", "试试其他关键词，或清除筛选。") }
             items(visible, key = { it.id }) { record -> Card(Modifier.fillMaxWidth(), insideMargin = PaddingValues(0.dp)) {
@@ -67,31 +64,23 @@ internal fun HistoryPage(records: List<TransferRecord>, delete: (String) -> Stri
                                 if (record.canDeleteFromHistory) "" else "\n任务结束后可删除",
                             onClick = ({ select(record.id) }).takeIf { active })
                     }
-                    IconButton(enabled = active && record.canDeleteFromHistory, modifier = Modifier.size(48.dp)
-                        .semantics(mergeDescendants = true) {
-                            contentDescription = "删除记录"; role = Role.Button
-                            if (!active || !record.canDeleteFromHistory) disabled()
-                        },
-                        onClick = { deletionId = record.id; showDelete = true }) {
-                        Icon(MiuixIcons.Delete, null, Modifier.size(22.dp), tint = uiColors().secondary)
-                    }
+                    IconAction(MiuixIcons.Delete, "删除记录", { deletionId = record.id; showDelete = true },
+                        Modifier, enabled = active && record.canDeleteFromHistory,
+                        tint = uiColors().secondary)
                 }
             } }
         }
     }
-    OverlayDialog(show = showDelete, title = "删除这条记录？", onDismissRequest = { showDelete = false; deletePending = false },
-        onDismissFinished = {
+    ConfirmationDialog(showDelete, "删除这条记录？", "确认删除", dismiss = { showDelete = false; deletePending = false },
+        confirm = { deletePending = true; showDelete = false }, enabled = active && deleting?.canDeleteFromHistory == true,
+        afterDismiss = {
             if (deletePending) {
                 deletePending = false
                 deletionId?.let { dismissOperation(); feedback = delete(it).ifEmpty { "记录已删除" } }
             }
             deletionId = null
         }) {
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            deleting?.let { Text("${it.source.displayTitle} → ${it.target.name}\n${dateText(it.createdAt)}") }
-            Text("删除后将从本机记录列表移除，无法在列表中再次查看。不会撤销运营商申请。")
-            ConfirmationActions("确认删除", { showDelete = false; deletePending = false },
-                { deletePending = true; showDelete = false }, enabled = active && deleting?.canDeleteFromHistory == true)
-        }
+        deleting?.let { DialogText("${it.source.displayTitle} → ${it.target.name}\n${dateText(it.createdAt)}", uiColors().secondary) }
+        DialogText("仅删除本机记录，不会撤销运营商申请。")
     }
 }

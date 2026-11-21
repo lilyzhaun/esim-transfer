@@ -17,18 +17,13 @@ import android.webkit.WebView
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.FileProvider
 import dev.quicktransfer.app.core.Contract
 import dev.quicktransfer.app.core.httpsOrigin
 import java.io.File
-import top.yukonga.miuix.kmp.basic.Text
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
 
 internal fun mediaPermissions(resources: Array<String>): List<String>? {
     val mapping = mapOf(PermissionRequest.RESOURCE_VIDEO_CAPTURE to Manifest.permission.CAMERA,
@@ -49,11 +44,8 @@ internal fun rememberCarrierWebChrome(origin: () -> String?, error: (String) -> 
     client.requestPermissions = { permissions.launch(it) }
     client.chooseFile = { files.launch(it) }
     DisposableEffect(client) { onDispose { client.close() } }
-    OverlayDialog(show = client.prompt.isNotEmpty(), title = "网页验证权限", onDismissRequest = client::deny) {
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text(client.dialogPrompt)
-            ConfirmationActions("继续", client::deny, client::allow, enabled = client.prompt.isNotEmpty())
-        }
+    ConfirmationDialog(client.prompt.isNotEmpty(), "网页验证权限", "继续", client::deny, client::allow) {
+        DialogText(client.dialogPrompt)
     }
     return client
 }
