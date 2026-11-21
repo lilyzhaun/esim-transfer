@@ -15,6 +15,8 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -22,6 +24,7 @@ import top.yukonga.miuix.kmp.basic.*
 import top.yukonga.miuix.kmp.blur.*
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Back
+import top.yukonga.miuix.kmp.icon.extended.Close
 
 internal val LocalAppearance = staticCompositionLocalOf { Appearance() }
 internal val LocalShaderSupported = staticCompositionLocalOf { false }
@@ -51,7 +54,7 @@ internal fun PageFrame(title: String, onBack: (() -> Unit)? = null, actions: @Co
             if (onBack == null) TopAppBar(title, scrollBehavior = header, actions = actions,
                 modifier = headerMaterial, color = if (frosted) Color.Transparent else colors.canvas)
             else SmallTopAppBar(title, modifier = headerMaterial, color = if (frosted) Color.Transparent else colors.canvas, navigationIcon = {
-                IconButton(onBack, modifier = Modifier.size(48.dp)) { Icon(MiuixIcons.Back, "返回") }
+                IconAction(MiuixIcons.Back, "返回", onBack)
             }, actions = actions)
         }) { padding ->
         val direction = LocalLayoutDirection.current
@@ -75,12 +78,19 @@ internal fun PageFrame(title: String, onBack: (() -> Unit)? = null, actions: @Co
 
 @Composable
 internal fun ActionMessage(message: String, dismiss: () -> Unit, modifier: Modifier = Modifier) {
-    Card(modifier.statusLiveRegion(), insideMargin = PaddingValues(12.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(message, Modifier.weight(1f).heightIn(max = 160.dp).verticalScroll(rememberScrollState()), fontSize = 14.sp, lineHeight = 21.sp)
-            InlineAction("关闭提示", true, dismiss)
+    Card(modifier, insideMargin = PaddingValues(start = 16.dp, top = 4.dp, end = 4.dp, bottom = 4.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(message, Modifier.weight(1f).heightIn(max = 132.dp).verticalScroll(rememberScrollState()).statusLiveRegion(),
+                fontSize = 14.sp, lineHeight = 21.sp)
+            IconAction(MiuixIcons.Close, "关闭提示", dismiss, tint = uiColors().secondary)
         }
     }
+}
+
+@Composable
+internal fun SectionLabel(title: String) {
+    SmallTitle(title, modifier = Modifier.semantics { heading() }, textColor = uiColors().secondary,
+        insideMargin = PaddingValues(horizontal = 16.dp, vertical = 2.dp))
 }
 
 @Composable

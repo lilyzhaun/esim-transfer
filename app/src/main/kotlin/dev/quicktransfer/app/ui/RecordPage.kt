@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.zxing.BarcodeFormat
@@ -32,7 +33,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import top.yukonga.miuix.kmp.basic.*
 import top.yukonga.miuix.kmp.preference.ArrowPreference
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
 
 @Composable
 internal fun RecordPage(record: TransferRecord?, state: TransferUiState, back: () -> Unit, refresh: () -> Unit, cancel: (String) -> Unit, resume: (String) -> Unit,
@@ -105,12 +105,13 @@ internal fun RecordPage(record: TransferRecord?, state: TransferUiState, back: (
                 item { Card(Modifier.fillMaxWidth(), insideMargin = PaddingValues(20.dp)) {
                     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         qr?.let { Image(it.asImageBitmap(), "目标设备下载 eSIM 的激活二维码", Modifier.widthIn(max = 252.dp).fillMaxWidth().aspectRatio(1f).background(Color.White)) }
-                        Text("在目标设备扫描二维码", fontSize = 16.sp)
-                        Text("用于 ${record.target.name} · EID 尾号 ${record.target.eid.takeLast(6)}", color = uiColors().secondary, fontSize = 14.sp)
+                        Text("在目标设备扫描二维码", fontSize = 16.sp, lineHeight = 23.sp, textAlign = TextAlign.Center)
+                        Text("用于 ${record.target.name} · EID 尾号 ${record.target.eid.takeLast(6)}", color = uiColors().secondary,
+                            fontSize = 14.sp, lineHeight = 21.sp, textAlign = TextAlign.Center)
                     }
                 } }
                 item { Card(Modifier.fillMaxWidth(), insideMargin = PaddingValues(0.dp)) {
-                    ArrowPreference(title = "完整激活码", summary = if (showCode) "收起激活码" else "手动添加 eSIM 时使用",
+                    DisclosureRow(title = "完整激活码", expanded = showCode, summary = if (showCode) "收起激活码" else "手动添加 eSIM 时使用",
                         onClick = { showCode = !showCode })
                     if (showCode) Box(Modifier.padding(20.dp)) {
                         SelectionContainer { Text(ActivationCodes.standard(code), fontFamily = FontFamily.Monospace, fontSize = 14.sp, lineHeight = 22.sp) }
@@ -126,7 +127,7 @@ internal fun RecordPage(record: TransferRecord?, state: TransferUiState, back: (
             } }
             item { Card(Modifier.fillMaxWidth(), insideMargin = PaddingValues(0.dp)) {
                 ArrowPreference(title = "任务日志", summary = "查看过程或导出记录", onClick = openLog.takeIf { active })
-                ArrowPreference(title = "设备与任务详情", summary = if (showInfo) "收起详细信息" else "${record.target.name} · ${dateText(record.createdAt)}",
+                DisclosureRow(title = "设备与任务详情", expanded = showInfo, summary = if (showInfo) "收起详细信息" else "${record.target.name} · ${dateText(record.createdAt)}",
                     onClick = { showInfo = !showInfo }, modifier = Modifier)
             } }
             if (showInfo) item { Card(Modifier.fillMaxWidth(), insideMargin = PaddingValues(0.dp)) {
@@ -144,16 +145,9 @@ internal fun RecordPage(record: TransferRecord?, state: TransferUiState, back: (
             } }
         }
     }
-    OverlayDialog(show = showEnd, title = "结束本地任务？", onDismissRequest = { showEnd = false }) {
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text("结束后可发起新任务，记录和日志仍保留。此操作不会撤销运营商申请，原网页将无法继续。")
-            ConfirmationActions("确认结束", { showEnd = false }, {
-                if (showEnd && endEnabled && record != null) {
-                    showEnd = false
-                    endLocalTask(record.id)
-                }
-            }, enabled = showEnd && endEnabled)
-        }
+    ConfirmationDialog(showEnd, "结束本地任务？", "确认结束", dismiss = { showEnd = false },
+        confirm = { if (record != null) { showEnd = false; endLocalTask(record.id) } }, enabled = endEnabled) {
+        DialogText("结束后可发起新任务，记录和日志仍保留。此操作不会撤销运营商申请，原网页将无法继续。")
     }
 }
 

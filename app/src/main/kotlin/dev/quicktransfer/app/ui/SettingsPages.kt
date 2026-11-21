@@ -4,20 +4,18 @@ package dev.quicktransfer.app.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.quicktransfer.app.BuildConfig
 import dev.quicktransfer.app.R
 import top.yukonga.miuix.kmp.basic.*
-import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.extended.*
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
 
@@ -26,11 +24,11 @@ internal fun SettingsPage(state: TransferUiState, appearance: Appearance, style:
     manager: () -> Unit, scope: () -> Unit, about: () -> Unit, carriers: () -> Unit) {
     val active = LocalRouteActive.current
     PageFrame("设置") {
-        item { SmallTitle("转移设置", textColor = uiColors().secondary) }
+        item { SectionLabel("转移设置") }
         item { Card(Modifier.fillMaxWidth(), insideMargin = PaddingValues(0.dp)) {
             ArrowPreference(title = "支持的运营商", summary = "查看国家地区与运营商", onClick = carriers.takeIf { active })
         } }
-        item { SmallTitle("管理应用", textColor = uiColors().secondary) }
+        item { SectionLabel("管理应用") }
         item { Card(Modifier.fillMaxWidth(), insideMargin = PaddingValues(0.dp)) {
             ArrowPreference(title = "外观与交互", summary = "${appearance.theme.title} · ${appearance.accent.title} · ${if (appearance.floating) "悬浮底栏" else "标准底栏"}",
                 onClick = style.takeIf { active })
@@ -59,14 +57,13 @@ internal fun AppearancePage(store: AppearanceStore, back: () -> Unit) {
         chooser = value; pendingTheme = null; pendingAccent = null; showChooser = true
     }
     PageFrame("外观与交互", onBack = back) {
-        item { SmallTitle("主题", textColor = uiColors().secondary) }
+        item { SectionLabel("主题") }
         item { Card(Modifier.fillMaxWidth(), insideMargin = PaddingValues(0.dp)) {
             ArrowPreference(title = "外观模式", summary = state.theme.title, onClick = { openChooser(AppearanceChooser.THEME) })
-            ArrowPreference(title = "主题色", summary = state.accent.title, onClick = { openChooser(AppearanceChooser.ACCENT) }, startAction = {
-                Box(Modifier.padding(end = 12.dp).size(22.dp).background(if (LocalDarkTheme.current) state.accent.dark else state.accent.light, CircleShape))
-            })
+            ArrowPreference(title = "主题色", summary = state.accent.title, onClick = { openChooser(AppearanceChooser.ACCENT) },
+                endActions = { AccentSwatch(state.accent) })
         } }
-        item { SmallTitle("导航与材质", textColor = uiColors().secondary) }
+        item { SectionLabel("导航与材质") }
         item { Card(Modifier.fillMaxWidth(), insideMargin = PaddingValues(0.dp)) {
             SwitchPreference(title = "悬浮底栏", summary = if (state.floating) "胶囊底栏与可拖动的选中气泡" else "使用标准底部导航", checked = state.floating, onCheckedChange = { store.set("floating_nav", it) })
             SwitchPreference(title = "模糊效果", summary = if (supported) "顶栏与关于页信息卡片使用磨砂材质" else "设备不支持，使用实色背景", checked = state.blur, enabled = supported, onCheckedChange = { store.set("blur_enabled", it) })
@@ -77,7 +74,7 @@ internal fun AppearancePage(store: AppearanceStore, back: () -> Unit) {
                 else -> "实色滑动气泡 · 开启后使用液态玻璃"
             }, checked = state.liquid, enabled = supported && state.floating, onCheckedChange = { store.set("liquid_glass_enabled", it) })
         } }
-        item { SmallTitle("应用交互", textColor = uiColors().secondary) }
+        item { SectionLabel("应用交互") }
         item { Card(Modifier.fillMaxWidth(), insideMargin = PaddingValues(0.dp)) {
             SwitchPreference(title = "预测性返回", summary = "返回手势跟手预览上一页", checked = state.predictiveBack, onCheckedChange = { store.set("predictive_back_enabled", it) })
             SwitchPreference(title = "触感反馈", summary = "跟随系统触感设置", checked = state.haptics, onCheckedChange = { store.set("haptics_enabled", it) })
@@ -85,23 +82,29 @@ internal fun AppearancePage(store: AppearanceStore, back: () -> Unit) {
         item { Text("设置即时生效并保存在本机。字体大小和动画速度跟随系统。", color = uiColors().secondary, fontSize = 14.sp, lineHeight = 21.sp) }
     }
     // Retain content through the exit; apply global palette changes only after the overlay is gone.
-    OverlayDialog(show = showChooser, title = if (chooser == AppearanceChooser.ACCENT) "选择主题色" else "外观模式",
-        onDismissRequest = { if (showChooser) { pendingTheme = null; pendingAccent = null; showChooser = false } },
-        onDismissFinished = {
+    AppDialog(showChooser, if (chooser == AppearanceChooser.ACCENT) "选择主题色" else "外观模式",
+        dismiss = { pendingTheme = null; pendingAccent = null; showChooser = false },
+        afterDismiss = {
             val theme = pendingTheme; val accent = pendingAccent
             pendingTheme = null; pendingAccent = null
             theme?.let(store::theme); accent?.let(store::accent)
         }) {
-        Column(Modifier.fillMaxWidth().heightIn(max = 380.dp).verticalScroll(rememberScrollState())) {
+        Column(Modifier.weight(1f, fill = false).fillMaxWidth().verticalScroll(rememberScrollState()).selectableGroup()) {
             if (chooser == AppearanceChooser.THEME) ThemeMode.entries.forEach { mode ->
-                BasicComponent(title = mode.title, onClick = { if (showChooser) { pendingTheme = mode; showChooser = false } },
-                    endActions = { RadioButton((pendingTheme ?: state.theme) == mode, onClick = null) })
+                ChoiceRow(mode.title, (pendingTheme ?: state.theme) == mode,
+                    { if (showChooser) { pendingTheme = mode; showChooser = false } })
             } else Accent.entries.forEach { accent ->
-                BasicComponent(title = accent.title, onClick = { if (showChooser) { pendingAccent = accent; showChooser = false } }, startAction = {
-                    Box(Modifier.padding(end = 12.dp).size(22.dp).background(if (LocalDarkTheme.current) accent.dark else accent.light, CircleShape))
-                }, endActions = { RadioButton((pendingAccent ?: state.accent) == accent, onClick = null) })
+                ChoiceRow(accent.title, (pendingAccent ?: state.accent) == accent,
+                    { if (showChooser) { pendingAccent = accent; showChooser = false } }, startAction = { AccentSwatch(accent) })
             }
         }
+    }
+}
+
+@Composable
+private fun AccentSwatch(accent: Accent) {
+    Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(16.dp).background(if (LocalDarkTheme.current) accent.dark else accent.light, CircleShape))
     }
 }
 

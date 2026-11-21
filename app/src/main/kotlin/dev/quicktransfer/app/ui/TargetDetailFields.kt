@@ -16,7 +16,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.quicktransfer.app.core.TargetDetails
 import org.json.JSONObject
-import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextField
 import top.yukonga.miuix.kmp.basic.Card
@@ -34,9 +33,9 @@ internal fun TargetDetailFields(details: TargetDetails, fields: List<String>, ch
     val focus = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        SmallTitle(if (required) "必填设备信息" else "补充设备信息", textColor = uiColors().secondary)
+        SectionLabel(if (required) "必填设备信息" else "补充设备信息")
         Text(if (required) "此运营商需要以下目标设备信息，填写后即可继续。" else "填写最终下载设备的真实信息，不适用的项目可以留空。",
-            fontSize = 14.sp, lineHeight = 21.sp, color = uiColors().secondary)
+            modifier = Modifier.padding(horizontal = 16.dp), fontSize = 14.sp, lineHeight = 21.sp, color = uiColors().secondary)
         visibleFields.forEachIndexed { index, key ->
             TextField(value = details.fields().getValue(key), onValueChange = { input ->
                 val value = if (key == "imei2") input.filterNot(Char::isWhitespace) else input
@@ -55,6 +54,7 @@ internal fun TargetDetailFields(details: TargetDetails, fields: List<String>, ch
                 keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Next) }, onDone = { keyboard?.hide(); focus.clearFocus() }),
                 modifier = Modifier.fillMaxWidth())
         }
-        details.error()?.let { Text(it, color = MiuixTheme.colorScheme.error, fontSize = 13.sp, modifier = Modifier.statusLiveRegion()) }
+        details.error()?.let { Text(it, color = MiuixTheme.colorScheme.error, fontSize = 13.sp, lineHeight = 19.sp,
+            modifier = Modifier.padding(horizontal = 16.dp).statusLiveRegion()) }
     }
 }
