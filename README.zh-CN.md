@@ -1,16 +1,16 @@
 # eSIM transfer
 
-用于转出当前 Android 设备上的 SIM、完成线路转移验证，并保存目标设备下载信息的 Android 应用。
+通过 Google Play 服务转出当前 Android 设备上的 SIM，并保存接收设备下载信息的应用。
 
 [下载正式版](https://github.com/lilyzhaun/esim-transfer/releases) · [English](README.md)
 
 ## 使用
 
-安装正式版，选择运行模式并连接所需服务，选择源 SIM，填写所需设备信息和目标 EID／IMEI。按提示验证源设备身份，再在目标设备使用返回的下载信息。
+在 LSPosed 中启用模块，作用域勾选 Google Play 服务，重新加载 Google Play 服务后回到应用连接。选择源 SIM，填写目标 EID、IMEI 和运营商要求的信息，按系统提示验证源设备身份，再在目标设备使用返回的下载信息。
 
 应用支持 miuix 外观、悬浮导航、常用目标设备和转移记录。取得下载信息不代表目标设备已经安装成功，实际资格由运营商、账户和设备决定。
 
-首页还提供已连接 eUICC 的套餐发现入口，需要兼容的卡片及已授权的本地连接。转移与发现日志可在应用内查看并主动导出。
+应用支持转移记录、运营商网页验证和任务日志导出。实际可用性取决于运营商及 Google Play 服务版本。
 
 App 界面保持简体中文；仓库的英文 README、代码说明和构建提示不改变应用语言。
 
@@ -20,10 +20,11 @@ App 界面保持简体中文；仓库的英文 README、代码说明和构建提
 
 ## 构建
 
-使用 JDK 21、Android SDK 37 和 Build Tools 36.0.0；额外构建输入及签名配置由构建环境提供。
+克隆本仓库，安装 JDK 21、Android SDK Platform 37 和 Build Tools 36.0.0，设置 `ANDROID_HOME` 或在 `local.properties` 配置 `sdk.dir`。Gradle Wrapper 会从 Google Maven 和 Maven Central 解析依赖。
 
 ```sh
-./gradlew :app:assembleRelease -PbuildInputsDir=/path/to/build-inputs
+./gradlew :app:assembleDebug
+./gradlew :app:assembleRelease
 ```
 
-需要直接安装时，请使用 Releases 中的签名 APK 和 SHA-256 校验文件。
+产物位于 `app/build/outputs/apk/`。调试包由本机调试密钥签名，发布构建需用自己的密钥签名后才能安装。签名不同的安装包不能覆盖升级。

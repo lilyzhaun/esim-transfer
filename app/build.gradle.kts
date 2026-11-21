@@ -6,11 +6,6 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-val buildInputs = providers.gradleProperty("buildInputsDir").orNull?.let { rootProject.file(it) }
-    ?: error("Build inputs are not configured. Use the configured build environment.")
-check(buildInputs.resolve("src/main/AndroidManifest.xml").isFile) {
-    "The configured build inputs are incomplete."
-}
 val signingFile = rootProject.file("signing.properties")
 val signing = Properties().apply { if (signingFile.isFile) signingFile.inputStream().use(::load) }
 
@@ -25,13 +20,6 @@ android {
         versionName = providers.gradleProperty("appVersionName").get()
     }
     buildFeatures { compose = true; aidl = true; buildConfig = true }
-    sourceSets.getByName("main") {
-        kotlin.directories += buildInputs.resolve("src/main/kotlin").path
-        aidl.directories += buildInputs.resolve("src/main/aidl").path
-        assets.directories += buildInputs.resolve("src/main/assets").path
-        res.directories += buildInputs.resolve("src/main/res").path
-        manifest.srcFile(buildInputs.resolve("src/main/AndroidManifest.xml"))
-    }
     signingConfigs {
         // Certificate rotation is applied by the external signing pipeline.
         if (signingFile.isFile && signing.getProperty("lineageFile").isNullOrBlank()) create("release") {
@@ -51,7 +39,7 @@ android {
             isDebuggable = false
             isJniDebuggable = false
             signingConfig = signingConfigs.findByName("release")
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), buildInputs.resolve("proguard-rules.pro"))
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
     compileOptions {
@@ -59,14 +47,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 }
-androidComponents.beforeVariants(androidComponents.selector().withBuildType("debug")) { it.enable = false }
 kotlin.compilerOptions.jvmTarget = JvmTarget.JVM_17
 
 dependencies {
     compileOnly("io.github.libxposed:api:102.0.0")
     implementation("io.github.libxposed:service:102.0.0")
-    implementation("dev.rikka.shizuku:api:13.1.5")
-    implementation("dev.rikka.shizuku:provider:13.1.5")
     implementation("androidx.activity:activity-compose:1.13.0")
     implementation("androidx.webkit:webkit:1.14.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")

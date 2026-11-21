@@ -39,7 +39,7 @@ class TaskArchiveStore(context: Context) {
         mutable.value = mutable.value + record.id
     }
     @Synchronized fun copyTo(id: String, output: OutputStream) {
-        check(contains(id)) { "详细日志尚未同步，请连接原服务或 Shizuku 后重试" }
+        check(contains(id)) { "详细日志尚未同步，请连接服务后重试" }
         GZIPInputStream(file(id).openRead()).use { it.copyTo(output) }
     }
     @Synchronized fun delete(id: String) {

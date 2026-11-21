@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 object HostRegistry {
     private class Endpoint(val binder: IBinder, val api: ITransferHost) { lateinit var death: IBinder.DeathRecipient }
     private val endpoints = mutableMapOf<ExecutionMode, Endpoint>()
-    private var mode = ExecutionMode.GMS
+    private val mode = ExecutionMode.GMS
     private val services = MutableStateFlow<ITransferHost?>(null)
     private val states = MutableStateFlow<Map<ExecutionMode, HostSnapshot>>(emptyMap())
     private val visible = MutableStateFlow(HostSnapshot())
@@ -21,10 +21,6 @@ object HostRegistry {
     val snapshots = states.asStateFlow()
     val snapshot = visible.asStateFlow()
 
-    @Synchronized fun selectLocal(local: Boolean) {
-        mode = if (local) ExecutionMode.LOCAL else ExecutionMode.GMS
-        updateSelection()
-    }
     @Synchronized fun hostFor(mode: ExecutionMode): ITransferHost? = endpoints[mode]?.let {
         if (it.binder.isBinderAlive) it.api else null
     }
@@ -38,8 +34,8 @@ object HostRegistry {
         states.value = states.value + (key to (states.value[key] ?: HostSnapshot()).copy(connected = false, executionMode = key.name))
         updateSelection()
     }
-    @Synchronized fun register(binder: IBinder, local: Boolean = false) {
-        val key = if (local) ExecutionMode.LOCAL else ExecutionMode.GMS
+    @Synchronized fun register(binder: IBinder) {
+        val key = ExecutionMode.GMS
         val previous = endpoints[key]
         if (previous?.binder === binder) return
         previous?.binder?.unlinkToDeath(previous.death, 0)

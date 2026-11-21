@@ -1,16 +1,16 @@
 # eSIM transfer
 
-Android application for transferring a SIM from the current Android device and saving the download information for a target device.
+Android application for transferring a SIM from the current Android device through Google Play services and saving download information for the receiving device.
 
 [Downloads](https://github.com/lilyzhaun/esim-transfer/releases) · [Chinese README](README.zh-CN.md)
 
 ## Use
 
-Install an official release. Select an execution mode, connect the required service, choose the source SIM, complete any required device information, and provide the target EID and IMEI. Follow the source-device verification flow and use the returned download information on the target device.
+Enable the module in LSPosed, select Google Play services in its scope, and reload Google Play services. Open the app and connect the service. Select the source SIM, enter the target EID and IMEI and any carrier-required fields, then complete the system's source-device verification. Use the result on the target device.
 
 The interface uses miuix and provides configurable appearance, floating navigation, saved targets, and persistent transfer history. Download information does not by itself confirm installation on the target device. Availability depends on the carrier, account, and devices.
 
-The home screen also offers package discovery for a connected eUICC. Discovery requires a compatible card and an authorized local connection. Transfer and discovery logs can be viewed and explicitly exported from the app.
+Transfer history, carrier web verification, and task-log export are available in the app. Carrier and Google Play services compatibility can change.
 
 The application UI remains in Simplified Chinese. English repository documentation and build messages do not change the application's language.
 
@@ -20,10 +20,11 @@ Files in this repository are licensed under Apache-2.0 unless otherwise noted. B
 
 ## Building
 
-Release builds use JDK 21, Android SDK 37, and Build Tools 36.0.0. Additional build inputs and signing configuration are supplied by the build environment.
+Clone this repository. Install JDK 21, Android SDK Platform 37, and Build Tools 36.0.0. Set `ANDROID_HOME` or configure `sdk.dir` in `local.properties`. The Gradle wrapper resolves dependencies from Google Maven and Maven Central.
 
 ```sh
-./gradlew :app:assembleRelease -PbuildInputsDir=/path/to/build-inputs
+./gradlew :app:assembleDebug
+./gradlew :app:assembleRelease
 ```
 
-For ready-to-install packages, use the signed APKs and SHA-256 checksums under Releases.
+APKs are written to `app/build/outputs/apk/`. Debug builds are signed with your local debug key; release builds require your own signing key to install. A locally signed APK cannot update an installation signed with a different key.

@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">eSIM transfer</string>
     <string name="app_description">通过 Google Play 服务，将本机线路转到指定目标 eUICC。</string>
+    <string name="about_app">关于 %1$s</string>
+    <string name="enable_module">在 LSPosed 中启用 %1$s，作用域选择 Google Play 服务。</string>
     <color name="launcher_background">#071D36</color>
     <style name="Theme.EsimTransfer" parent="android:style/Theme.Material.Light.NoActionBar">
         <item name="android:windowLightStatusBar">true</item>

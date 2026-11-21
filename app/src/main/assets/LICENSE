@@ -1,0 +1,13 @@
+eSIM transfer
+Copyright 2026 lilyzhaun.
+
+本应用源码采用 Apache License 2.0。第三方组件保留原有版权和许可。
+
+第三方组件包括 miuix、AndroidX、Kotlin、kotlinx.coroutines、libxposed 和 ZXing。
+MCC 国家地区数据 Copyright 2006 The Android Open Source Project，采用 Apache-2.0。
+
+OS3 流体云着色器与绘制器：
+Copyright 2026 compose-miuix-ui contributors. Apache-2.0.
+来源：compose-miuix-ui/miuix c36fab72391801d1e3ea5a00f966bf16bac28d4c，
+经 lilyzhaun/flipduo d582713304cfa2cc5ba2716a09fcafe7a6ad149f 中采用 Apache-2.0 的文件引入。
+修改了包名、可见性与零透明度处理。
